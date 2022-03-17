@@ -1,11 +1,19 @@
+# Advent of Code "Trophy"
+
+# IMPORTS --------------------------------------------------------------------
 import board
 import digitalio
 import time
+
+# SETUP ----------------------------------------------------------------------
 
 led = digitalio.DigitalInOut(board.LED)
 led.direction = digitalio.Direction.OUTPUT
 
 print("Init complete.")
+
+
+# LOOP -----------------------------------------------------------------------
 
 print("Starting loop...")
 
