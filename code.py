@@ -4,7 +4,9 @@
 import board
 import displayio
 import keypad 
+import random
 import time
+import ulab.numpy as np
 
 from adafruit_bitmap_font import bitmap_font
 from adafruit_display_text import label
@@ -13,8 +15,9 @@ from adafruit_display_shapes.circle import Circle
 
 # HELPER FUNCTIONS -----------------------------------------------------------
 
-
-
+# convenience function to convert (r,c) coords to linear index for circle array
+def cir_lindex(r,c):
+    return 10*c + r
 
 # SETUP ----------------------------------------------------------------------
 
@@ -185,12 +188,57 @@ for ir in range(10):
         disp_circles.append( Circle( cir_start_x+radius+1+(2*radius+2)*ir,
                                      cir_start_y+radius+1+(2*radius+2)*ic, 
                                      radius,
-                                     fill=0xFFFFFF,
+                                     fill=0x000000, # 0xFFFFFF
                                      outline=None) )
 
-        # TODO record cicle "coords" (ir,ic) in some data structure
-
         disp_group[DGROUP_2021DAY11].append(disp_circles[-1])
+
+# colormap
+# need to colors for energy levels 0 - 10 (11 total), 
+# and 0 should be dark gray but not black; 10 is the "flashing" color
+colormap = list()
+colormap.append(0x171717) # 0
+colormap.append(0x2E2E2E) # 1
+colormap.append(0x464646) # 2
+colormap.append(0x5D5D5D) # 3
+colormap.append(0x747474) # 4
+colormap.append(0x8B8B8B) # 5
+colormap.append(0xA2A2A2) # 6
+colormap.append(0xB9B9B9) # 7
+colormap.append(0xD1D1D1) # 8
+colormap.append(0xE8E8E8) # 9
+colormap.append(0xFFFFFF) # 10+
+
+# load input (or generate randomly)
+# there's not going to be a lot of error handling here...
+init_filename = "aoc2021_day11_init.txt"
+energy = np.zeros((10,10))
+
+# try to os.stat the input file, if it throws an exception then file is not there
+try:
+    f = open("aoc2021_day11_init.txt")
+    bInitFile = True
+    print("reading init file")
+except:
+    bInitFile = False
+    print("generating random init")
+
+for ir in range(10):
+    if bInitFile:
+        line = f.readline()
+
+    for ic in range(10):
+        if bInitFile: 
+            v = int(line[ic])
+        else:
+            v = random.randint(0,8)
+
+        energy[ir][ic] = v
+        disp_circles[cir_lindex(ir,ic)].fill = colormap[v]
+
+if bInitFile:
+    f.close()
+
 
 
 # init display
