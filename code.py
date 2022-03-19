@@ -3,13 +3,18 @@
 # IMPORTS --------------------------------------------------------------------
 import board
 import displayio
+import keypad 
 import time
 
 from adafruit_bitmap_font import bitmap_font
 from adafruit_display_text import label
 from adafruit_display_shapes.rect import Rect
 
+
 # SETUP ----------------------------------------------------------------------
+
+# set up some global constants
+MAX_CHAR = 20 # max number of text chars that can fit, based on observation
 
 # load font
 font = bitmap_font.load_font("fonts/SourceCodePro-subset_32_126-10pt.bdf", 
@@ -28,6 +33,24 @@ DGROUP_2021DAY11 = 2
 #label_aoc = label.Label(font, text="Advent of Code\n  int y=2021;", color=0x009900)
 #label_aoc.anchor_point = (0.0,0.0) # upper left
 #label_aoc.anchored_position = (0,0)
+
+# button stuff
+BUTTON_LEFT = const(128)
+BUTTON_UP = const(64)
+BUTTON_DOWN = const(32)
+BUTTON_RIGHT = const(16)
+BUTTON_SELECT = const(8)
+BUTTON_START = const(4)
+BUTTON_A = const(2)
+BUTTON_B = const(1)
+
+keys = keypad.ShiftRegisterKeys(
+    clock=board.BUTTON_CLOCK,
+    data=board.BUTTON_OUT,
+    latch=board.BUTTON_LATCH,
+    key_count=8,
+    value_when_pressed=True,
+)
 
 # build disp_group[DGROUP_MAIN] --------------------------
 
@@ -97,7 +120,7 @@ disp_group[DGROUP_50STARS].append(label_firstto50date)
 
 # stars
 # label_stars = label.Label(font,text="0123456789012345678901234",color=0xffff66) # only 20 chars show
-label_stars = label.Label(font,text=("*"*20),color=0xffff66)
+label_stars = label.Label(font,text=("*"*MAX_CHAR),color=0xffff66)
 label_stars.anchor_point = (0.0,0.0) # middle top
 label_stars.anchored_position = (0,100)
 disp_group[DGROUP_50STARS].append(label_stars)
@@ -133,9 +156,16 @@ print("DEBUG: STARTING LOOP...")
 dgroup_show = 0
 
 while True:
-    
-    time.sleep(5.0)
-    dgroup_show = (dgroup_show+1)%len(disp_group)
-    board.DISPLAY.show(disp_group[dgroup_show])
 
-    print("DEBUG: ...BOTTOM OF LOOP")
+    # detect button presses
+    ke = event = keys.events.get()
+    if ke: # if any key press event is happening
+        print("detected key press = %d"%ke.key_number)
+        dgroup_show = (dgroup_show+1)%len(disp_group)
+        board.DISPLAY.show(disp_group[dgroup_show])
+        time.sleep(0.5) # pause to ignore registering too many clicks
+        keys.events.clear()   
+        keys.reset()           
+
+
+    # print("DEBUG: ...BOTTOM OF LOOP")
