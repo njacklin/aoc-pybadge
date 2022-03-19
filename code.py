@@ -9,6 +9,7 @@ import time
 from adafruit_bitmap_font import bitmap_font
 from adafruit_display_text import label
 from adafruit_display_shapes.rect import Rect
+from adafruit_display_shapes.circle import Circle
 
 
 # SETUP ----------------------------------------------------------------------
@@ -133,16 +134,58 @@ disp_group[DGROUP_50STARS].append(label_stars)
 # disp_group[DGROUP_2021DAY11].append(bg)
 
 # AOC label at top
-label_aoc = label.Label(font, text="Advent of Code\n   int y=2021;", color=0x009900)
+# label_aoc = label.Label(font, text="Advent of Code\n   int y=2021;", color=0x009900)
+label_aoc = label.Label(font, text="AoC 2021      Day 11", color=0x009900)
 label_aoc.anchor_point = (0.0,0.0) # left top
 label_aoc.anchored_position = (0,0)
 disp_group[DGROUP_2021DAY11].append(label_aoc)
 
-# "Day 11 Demo"
-label_demo = label.Label(font,text="2021 DAY 11")
-label_demo.anchor_point = (0.5,1.0) # middle bottom
-label_demo.anchored_position = (board.DISPLAY.width/2,board.DISPLAY.height)
-disp_group[DGROUP_2021DAY11].append(label_demo)
+# "Step" label
+label_step = label.Label(font, text="Step")
+label_step.anchor_point = (0.0,0.0) # left top
+label_step.anchored_position = (0,27)
+disp_group[DGROUP_2021DAY11].append(label_step)
+
+# Step value label
+label_stepval = label.Label(font, text="0000")
+label_stepval.anchor_point = (0.0,0.0) # left top
+label_stepval.anchored_position = (0,42)
+disp_group[DGROUP_2021DAY11].append(label_stepval)
+
+# "Flashes" label
+labl_flash = label.Label(font, text="Flashes")
+labl_flash.anchor_point = (0.0,0.0) # left top
+labl_flash.anchored_position = (0,100)
+disp_group[DGROUP_2021DAY11].append(labl_flash)
+
+# Flash value label
+label_flashval = label.Label(font, text="000000")
+label_flashval.anchor_point = (0.0,0.0) # left top
+label_flashval.anchored_position = (0,115)
+disp_group[DGROUP_2021DAY11].append(label_flashval)
+
+# # "Day 11 Demo" label at the bottom
+# label_demo = label.Label(font,text="2021 DAY 11")
+# label_demo.anchor_point = (0.5,1.0) # middle bottom
+# label_demo.anchored_position = (board.DISPLAY.width/2,board.DISPLAY.height)
+# disp_group[DGROUP_2021DAY11].append(label_demo)
+
+# circles (dumbo ocotopi)
+# TODO?: replace with sprites?
+radius = 4
+cir_start_x = 57
+cir_start_y = 25
+disp_circles = list()
+for ir in range(10):
+    for ic in range(10):
+        disp_circles.append( Circle( cir_start_x+radius+1+(2*radius+2)*ir,
+                                     cir_start_y+radius+1+(2*radius+2)*ic, 
+                                     radius,
+                                     fill=0xFFFFFF,
+                                     outline=None) )
+
+        disp_group[DGROUP_2021DAY11].append(disp_circles[-1])
+
 
 # init display
 board.DISPLAY.show(disp_group[DGROUP_MAIN])
