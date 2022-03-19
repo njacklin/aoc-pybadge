@@ -11,6 +11,10 @@ from adafruit_display_text import label
 from adafruit_display_shapes.rect import Rect
 from adafruit_display_shapes.circle import Circle
 
+# HELPER FUNCTIONS -----------------------------------------------------------
+
+
+
 
 # SETUP ----------------------------------------------------------------------
 
@@ -26,24 +30,24 @@ disp_group = list()
 disp_group.append(displayio.Group()) # disp_group[0] for main leaderboard
 disp_group.append(displayio.Group()) # disp_group[1] for first-to-50 stars
 disp_group.append(displayio.Group()) # disp_group[2] for 2021 day11 demo
-DGROUP_MAIN = 0
-DGROUP_50STARS = 1
-DGROUP_2021DAY11 = 2
+DGROUP_MAIN      = const(0)
+DGROUP_50STARS   = const(1)
+DGROUP_2021DAY11 = const(2)
 
-# build common display group assets - DOES NOT WORK
+# build common display group assets - DOES NOT WORK, CANNOT ADD OBJECTS TO MULTIPLE DISPLAY GROUPS
 #label_aoc = label.Label(font, text="Advent of Code\n  int y=2021;", color=0x009900)
 #label_aoc.anchor_point = (0.0,0.0) # upper left
 #label_aoc.anchored_position = (0,0)
 
 # button stuff
-BUTTON_LEFT = const(128)
-BUTTON_UP = const(64)
-BUTTON_DOWN = const(32)
-BUTTON_RIGHT = const(16)
+BUTTON_LEFT   = const(128)
+BUTTON_UP     = const(64)
+BUTTON_DOWN   = const(32)
+BUTTON_RIGHT  = const(16)
 BUTTON_SELECT = const(8)
-BUTTON_START = const(4)
-BUTTON_A = const(2)
-BUTTON_B = const(1)
+BUTTON_START  = const(4)
+BUTTON_A      = const(2)
+BUTTON_B      = const(1)
 
 keys = keypad.ShiftRegisterKeys(
     clock=board.BUTTON_CLOCK,
@@ -172,9 +176,9 @@ disp_group[DGROUP_2021DAY11].append(label_flashval)
 
 # circles (dumbo ocotopi)
 # TODO?: replace with sprites?
-radius = 4
-cir_start_x = 57
-cir_start_y = 25
+radius = const(4)
+cir_start_x = const(57)
+cir_start_y = const(25) 
 disp_circles = list()
 for ir in range(10):
     for ic in range(10):
@@ -183,6 +187,8 @@ for ir in range(10):
                                      radius,
                                      fill=0xFFFFFF,
                                      outline=None) )
+
+        # TODO record cicle "coords" (ir,ic) in some data structure
 
         disp_group[DGROUP_2021DAY11].append(disp_circles[-1])
 
