@@ -31,9 +31,9 @@ DGROUP_2021DAY11 = 2
 
 # build disp_group[DGROUP_MAIN] --------------------------
 
-# background
-bg = Rect(0, 0, board.DISPLAY.width, board.DISPLAY.height, fill=0x0f0f23)
-disp_group[DGROUP_MAIN].append(bg)
+# # background
+# bg = Rect(0, 0, board.DISPLAY.width, board.DISPLAY.height, fill=0x0f0f23)
+# disp_group[DGROUP_MAIN].append(bg)
 
 # AOC label at top
 label_aoc = label.Label(font, text="Advent of Code\n   int y=2021;", color=0x009900)
@@ -67,9 +67,9 @@ disp_group[DGROUP_MAIN].append(label_3rd)
 
 # build disp_group[DGROUP_50STARS] -----------------------
 
-# background
-bg = Rect(0, 0, board.DISPLAY.width, board.DISPLAY.height, fill=0x0f0f23)
-disp_group[DGROUP_50STARS].append(bg)
+# # background
+# bg = Rect(0, 0, board.DISPLAY.width, board.DISPLAY.height, fill=0x0f0f23)
+# disp_group[DGROUP_50STARS].append(bg)
 
 # AOC label at top
 label_aoc = label.Label(font, text="Advent of Code\n   int y=2021;", color=0x009900)
@@ -95,12 +95,19 @@ label_firstto50date.anchor_point = (0.5,0.0) # middle top
 label_firstto50date.anchored_position = (board.DISPLAY.width/2,75)
 disp_group[DGROUP_50STARS].append(label_firstto50date)
 
+# stars
+# label_stars = label.Label(font,text="0123456789012345678901234",color=0xffff66) # only 20 chars show
+label_stars = label.Label(font,text=("*"*20),color=0xffff66)
+label_stars.anchor_point = (0.0,0.0) # middle top
+label_stars.anchored_position = (0,100)
+disp_group[DGROUP_50STARS].append(label_stars)
+
 
 # build disp_group[DGROUP_2021DAY11] ---------------------
 
-# background
-bg = Rect(0, 0, board.DISPLAY.width, board.DISPLAY.height, fill=0x0f0f23)
-disp_group[DGROUP_2021DAY11].append(bg)
+# # background -- looks bad when display is viewed from the side
+# bg = Rect(0, 0, board.DISPLAY.width, board.DISPLAY.height, fill=0x0f0f23)
+# disp_group[DGROUP_2021DAY11].append(bg)
 
 # AOC label at top
 label_aoc = label.Label(font, text="Advent of Code\n   int y=2021;", color=0x009900)
