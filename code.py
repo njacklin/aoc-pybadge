@@ -17,7 +17,139 @@ from adafruit_display_shapes.circle import Circle
 
 # convenience function to convert (r,c) coords to linear index for circle array
 def cir_lindex(r,c):
-    return 10*c + r
+    return int( 10*c + r )
+
+# set step count label
+def update_label_stepval(sv): # takes in an int
+    global label_stepval
+    label_stepval.text = "%04d"%sv
+
+# set flash count label
+def update_label_flashval(fv): # takes in an int
+    global label_flashval
+    label_flashval.text = "%06d"%fv
+
+# init demo
+# there's not going to be a lot of error handling here...
+def init_demo():
+    global energy
+    global flash_count
+    global disp_circles
+    global step
+    
+    # set global variables to initial values
+    energy = np.zeros((10,10))
+    step = 0
+    flash_count = 0
+
+    update_label_stepval(step)
+    update_label_flashval(flash_count)
+
+    # read input file or generate random input
+    try:
+        f = open("aoc2021_day11_init.txt")
+        bInitFile = True
+        print("reading init file")
+    except:
+        bInitFile = False
+        print("generating random init")
+
+    for ir in range(10):
+        if bInitFile:
+            line = f.readline()
+
+        for ic in range(10):
+            if bInitFile: 
+                v = int(line[ic])
+            else:
+                v = random.randint(0,8)
+
+            energy[ir][ic] = v
+            disp_circles[cir_lindex(ir,ic)].fill = colormap[v]
+
+    if bInitFile:
+        f.close()
+
+# find (r,c) indices of "flashing" energy values 
+# from AoC 2021 day 11 solution
+def find_flashers(octomap):
+    (nrows,ncols) = octomap.shape
+    
+    flashers = set()
+    
+    for i in range(nrows):
+        for j in range(ncols):
+            if octomap[i][j] > 9:
+                flashers |= {(i,j)}
+                
+    return flashers
+
+
+# find "neighbors" and increment energy values 
+# from AoC 2021 day 11 solution
+def increment_neighbors(octomap,i,j):
+    (nrows,ncols) = octomap.shape
+    
+    if i == 0 and j == 0 : # upper left corner
+        octomap[i][j+1] += 1
+        octomap[i+1][j] += 1 
+        octomap[i+1][j+1] += 1
+    elif i == 0 and j == ncols-1: # upper right corner
+        octomap[i][j-1] += 1 
+        octomap[i+1][j] += 1 
+        octomap[i+1][j-1] += 1
+    elif i == 0: # top row middle
+        octomap[i][j-1] += 1  
+        octomap[i][j+1] += 1  
+        octomap[i+1][j] += 1
+        octomap[i+1][j-1] += 1  
+        octomap[i+1][j+1] += 1   
+    elif i == nrows-1 and j == 0: # lower left corner
+        octomap[i-1][j] += 1 
+        octomap[i][j+1] += 1 
+        octomap[i-1][j+1] += 1  
+    elif i == nrows-1 and j == ncols-1: # lower right corner
+        octomap[i-1][j] += 1
+        octomap[i][j-1] += 1 
+        octomap[i-1][j-1] += 1  
+    elif i == nrows-1: # bottom row middle
+        octomap[i-1][j] += 1 
+        octomap[i][j-1] += 1 
+        octomap[i][j+1] += 1 
+        octomap[i-1][j-1] += 1  
+        octomap[i-1][j+1] += 1  
+    elif j == 0: # left middle
+        octomap[i-1][j] += 1 
+        octomap[i][j+1] += 1 
+        octomap[i+1][j] += 1 
+        octomap[i-1][j+1] += 1  
+        octomap[i+1][j+1] += 1  
+    elif j == ncols-1: # right middle
+        octomap[i-1][j] += 1 
+        octomap[i][j-1] += 1 
+        octomap[i+1][j] += 1 
+        octomap[i-1][j-1] += 1  
+        octomap[i+1][j-1] += 1  
+    else: # middle
+        octomap[i-1][j] += 1 
+        octomap[i][j-1] += 1 
+        octomap[i][j+1] += 1 
+        octomap[i+1][j] += 1 
+        octomap[i-1][j-1] += 1  
+        octomap[i-1][j+1] += 1  
+        octomap[i+1][j-1] += 1  
+        octomap[i+1][j+1] += 1  
+    
+    return octomap
+
+# copy set function (should work like copy.deepcopy, but for a set)
+def copy_set(inset):
+    outset = set()
+
+    for e in inset:
+        outset.add(e)
+
+    return outset
 
 # SETUP ----------------------------------------------------------------------
 
@@ -209,37 +341,12 @@ colormap.append(0xD1D1D1) # 8
 colormap.append(0xE8E8E8) # 9
 colormap.append(0xFFFFFF) # 10+
 
-# load input (or generate randomly)
-# there's not going to be a lot of error handling here...
-init_filename = "aoc2021_day11_init.txt"
-energy = np.zeros((10,10))
-
-# try to os.stat the input file, if it throws an exception then file is not there
-try:
-    f = open("aoc2021_day11_init.txt")
-    bInitFile = True
-    print("reading init file")
-except:
-    bInitFile = False
-    print("generating random init")
-
-for ir in range(10):
-    if bInitFile:
-        line = f.readline()
-
-    for ic in range(10):
-        if bInitFile: 
-            v = int(line[ic])
-        else:
-            v = random.randint(0,8)
-
-        energy[ir][ic] = v
-        disp_circles[cir_lindex(ir,ic)].fill = colormap[v]
-
-if bInitFile:
-    f.close()
-
-
+# establish global variables for demo and initialize
+step = 0
+flash_count = 0
+step_delay_sec = 1.0
+MAX_STEP = const(9999)
+init_demo()
 
 # init display
 board.DISPLAY.show(disp_group[DGROUP_MAIN])
@@ -254,12 +361,86 @@ dgroup_show = 0
 
 while True:
 
+    # do state actions
+    if dgroup_show == DGROUP_MAIN:
+        pass
+    elif dgroup_show == DGROUP_50STARS:
+        pass
+    elif dgroup_show == DGROUP_2021DAY11:
+        if time.monotonic() >= next_step_time and step <= MAX_STEP:
+
+            # inc step
+            step += 1
+            update_label_stepval(step)
+                    
+            # increase energy and update display
+            for ir in range(10):
+                for ic in range(10):
+                    energy[ir][ic] += 1
+                    disp_circles[cir_lindex(ir,ic)].fill = colormap[int(min(energy[ir][ic],10))]
+                    if energy[ir][ic] >= 10:
+                        disp_circles[cir_lindex(ir,ic)].outline = 0xFFFFF6
+                    else:
+                        disp_circles[cir_lindex(ir,ic)].outline = None
+
+            time.sleep(0.1) # not ideal, but want some visual delay
+            
+            # find inital flashers
+            flashers = find_flashers(energy)
+            
+            # propogate flashes and update display
+            new_flashers = copy_set(flashers)
+            while len(new_flashers) > 0:
+                for (ir,ic) in new_flashers:
+                    energy = increment_neighbors(energy,ir,ic) 
+                    disp_circles[cir_lindex(ir,ic)].fill = colormap[10]
+                    disp_circles[cir_lindex(ir,ic)].outline = 0xFFFFF6
+                time.sleep(0.1) #  not ideal, but want some visual delay
+                flashers |= new_flashers
+                new_flashers = find_flashers(energy) - flashers 
+                    
+            # reset energy levels of flashers
+            flashed = find_flashers(energy)
+            
+            if len(flashed) == (100):
+                print("ALL FLASHED at step = %d"%(step+1))
+                #break
+            
+            flash_count += len(flashed)
+
+            if len(flashed) > 0:
+                time.sleep(0.1) #  not ideal, but want some visual delay
+
+            for (ir,ic) in flashed:
+                energy[ir][ic] = 0
+                disp_circles[cir_lindex(ir,ic)].fill = colormap[0]
+                disp_circles[cir_lindex(ir,ic)].outline = None
+
+            update_label_flashval(flash_count)
+
+            # set time for next step increment
+            next_step_time = time.monotonic() + step_delay_sec
+    else:
+        print("undefined state: %d"%dgroup_show)
+
     # detect button presses
     ke = event = keys.events.get()
     if ke: # if any key press event is happening
         print("detected key press = %d"%ke.key_number)
         dgroup_show = (dgroup_show+1)%len(disp_group)
         board.DISPLAY.show(disp_group[dgroup_show])
+
+        # do state transition stuff, if necessary
+        if dgroup_show == DGROUP_MAIN:
+            pass
+        elif dgroup_show == DGROUP_50STARS:
+            pass
+        elif dgroup_show == DGROUP_2021DAY11:
+            init_demo()
+            next_step_time = time.monotonic() + step_delay_sec
+        else:
+            print("undefined state transition: %d"%dgroup_show)
+
         time.sleep(0.5) # pause to ignore registering too many clicks
         keys.events.clear()   
         keys.reset()           
