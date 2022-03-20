@@ -66,6 +66,7 @@ def init_demo():
 
             energy[ir][ic] = v
             disp_circles[cir_lindex(ir,ic)].fill = colormap[v]
+            disp_circles[cir_lindex(ir,ic)].outline = colormap[v]
 
     if bInitFile:
         f.close()
@@ -321,7 +322,8 @@ for ir in range(10):
                                      cir_start_y+radius+1+(2*radius+2)*ic, 
                                      radius,
                                      fill=0x000000, # 0xFFFFFF
-                                     outline=None) )
+                                     stroke=1,
+                                     outline=0x000000) )
 
         disp_group[DGROUP_2021DAY11].append(disp_circles[-1])
 
@@ -378,10 +380,9 @@ while True:
                 for ic in range(10):
                     energy[ir][ic] += 1
                     disp_circles[cir_lindex(ir,ic)].fill = colormap[int(min(energy[ir][ic],10))]
+                    disp_circles[cir_lindex(ir,ic)].outline = colormap[int(min(energy[ir][ic],10))]
                     if energy[ir][ic] >= 10:
-                        disp_circles[cir_lindex(ir,ic)].outline = 0xFFFFF6
-                    else:
-                        disp_circles[cir_lindex(ir,ic)].outline = None
+                        disp_circles[cir_lindex(ir,ic)].outline = 0xFFFF66
 
             time.sleep(0.1) # not ideal, but want some visual delay
             
@@ -394,7 +395,7 @@ while True:
                 for (ir,ic) in new_flashers:
                     energy = increment_neighbors(energy,ir,ic) 
                     disp_circles[cir_lindex(ir,ic)].fill = colormap[10]
-                    disp_circles[cir_lindex(ir,ic)].outline = 0xFFFFF6
+                    disp_circles[cir_lindex(ir,ic)].outline = 0xFFFF66
                 time.sleep(0.1) #  not ideal, but want some visual delay
                 flashers |= new_flashers
                 new_flashers = find_flashers(energy) - flashers 
@@ -414,7 +415,7 @@ while True:
             for (ir,ic) in flashed:
                 energy[ir][ic] = 0
                 disp_circles[cir_lindex(ir,ic)].fill = colormap[0]
-                disp_circles[cir_lindex(ir,ic)].outline = None
+                disp_circles[cir_lindex(ir,ic)].outline = colormap[0]
 
             update_label_flashval(flash_count)
 
@@ -437,13 +438,12 @@ while True:
             pass
         elif dgroup_show == DGROUP_2021DAY11:
             init_demo()
-            next_step_time = time.monotonic() + step_delay_sec
+            next_step_time = time.monotonic() + 2*step_delay_sec
         else:
             print("undefined state transition: %d"%dgroup_show)
 
         time.sleep(0.5) # pause to ignore registering too many clicks
         keys.events.clear()   
         keys.reset()           
-
 
     # print("DEBUG: ...BOTTOM OF LOOP")
