@@ -212,22 +212,37 @@ label_leaderboard.anchored_position = (board.DISPLAY.width/2,45)
 disp_group[DGROUP_MAIN].append(label_leaderboard)
 
 # first place
-label_first = label.Label(font,text="1st:38* John Moon",scale=1)
-label_first.anchor_point = (0.0,0.0) # left top
-label_first.anchored_position = (0,60)
-disp_group[DGROUP_MAIN].append(label_first)
+label_1st = label.Label(font,text="1st:    John Moon")
+label_1st.anchor_point = (0.0,0.0) # left top
+label_1st.anchored_position = (0,60)
+disp_group[DGROUP_MAIN].append(label_1st)
+
+label_1st_stars = label.Label(font,text="    38*",color=0xFFFF66)
+label_1st_stars.anchor_point = (0.0,0.0) # left top
+label_1st_stars.anchored_position = (-1,60+1)
+disp_group[DGROUP_MAIN].append(label_1st_stars)
 
 # second place
-label_2nd = label.Label(font,text="2nd:36* Neil Jacklin")
+label_2nd = label.Label(font,text="2nd:    Neil Jacklin")
 label_2nd.anchor_point = (0.0,0.0) # left top
 label_2nd.anchored_position = (0,75)
 disp_group[DGROUP_MAIN].append(label_2nd)
 
+label_2nd_stars = label.Label(font,text="    36*",color=0xFFFF66)
+label_2nd_stars.anchor_point = (0.0,0.0) # left top
+label_2nd_stars.anchored_position = (-1,75+1)
+disp_group[DGROUP_MAIN].append(label_2nd_stars)
+
 # third place
-label_3rd = label.Label(font,text="3rd:31*DaveBuscaglia")
+label_3rd = label.Label(font,text="3rd:   DaveBuscaglia")
 label_3rd.anchor_point = (0.0,0.0) # left top
 label_3rd.anchored_position = (0,90)
 disp_group[DGROUP_MAIN].append(label_3rd)
+
+label_3rd_stars = label.Label(font,text="    31*",color=0xFFFF66)
+label_3rd_stars.anchor_point = (0.0,0.0) # left top
+label_3rd_stars.anchored_position = (-1,90+1)
+disp_group[DGROUP_MAIN].append(label_3rd_stars)
 
 # build disp_group[DGROUP_50STARS] -----------------------
 
