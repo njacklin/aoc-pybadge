@@ -1,2 +1,2 @@
-screen /dev/tty.usbmodem101 115200
+screen /dev/tty.usbmodem1101 115200
 
