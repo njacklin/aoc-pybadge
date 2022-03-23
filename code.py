@@ -1,9 +1,26 @@
 # Advent of Code "Trophy"
 
+
+# PARAMETERS AND CONSTANTS ----------------------------------------------------
+
+USE_NEOPIXELS = True # set to True or False... one board is defective :-(
+
+MAX_CHAR = 20 # max number of text chars that can fit, based on observation
+
+COLOR_AOCGREEN  = 0x009900 # from AoC website stylesheet
+COLOR_AOCYELLOW = 0xFFFF66 # from AoC website stylesheet
+COLOR_AOCBGBLUE = 0x0F0F23 # from AoC website stylesheet (background) -- not used
+COLOR_WHITE  = 0xFFFFFF
+COLOR_BLACK  = 0x000000
+COLOR_GRAY   = 0x888888
+COLOR_YELLOW = 0xFFFF00
+
 # IMPORTS --------------------------------------------------------------------
 import board
 import displayio
 import keypad 
+from math import floor
+import neopixel
 import random
 import time
 import ulab.numpy as np
@@ -29,21 +46,26 @@ def update_label_flashval(fv): # takes in an int
     global label_flashval
     label_flashval.text = "%06d"%fv
 
+# set stars label 
+def update_label_stars(star_count): 
+    global label_stars
+    label_stars.text = ("*"*star_count) + (" "*(MAX_CHAR-star_count))
+
 # init demo
 # there's not going to be a lot of error handling here...
 def init_demo():
-    global energy
-    global flash_count
+    global demo_energy
+    global demo_flash_count
     global disp_circles
-    global step
+    global demo_step
     
     # set global variables to initial values
-    energy = np.zeros((10,10))
-    step = 0
-    flash_count = 0
+    demo_energy = np.zeros((10,10))
+    demo_step = 0
+    demo_flash_count = 0
 
-    update_label_stepval(step)
-    update_label_flashval(flash_count)
+    update_label_stepval(demo_step)
+    update_label_flashval(demo_flash_count)
 
     # read input file or generate random input
     try:
@@ -64,7 +86,7 @@ def init_demo():
             else:
                 v = random.randint(0,8)
 
-            energy[ir][ic] = v
+            demo_energy[ir][ic] = v
             disp_circles[cir_lindex(ir,ic)].fill = colormap[v]
             disp_circles[cir_lindex(ir,ic)].outline = colormap[v]
 
@@ -154,9 +176,6 @@ def copy_set(inset):
 
 # SETUP ----------------------------------------------------------------------
 
-# set up some global constants
-MAX_CHAR = 20 # max number of text chars that can fit, based on observation
-
 # load font
 font = bitmap_font.load_font("fonts/SourceCodePro-subset_32_126-10pt.bdf", 
                              displayio.Bitmap)
@@ -196,11 +215,11 @@ keys = keypad.ShiftRegisterKeys(
 # build disp_group[DGROUP_MAIN] --------------------------
 
 # # background
-# bg = Rect(0, 0, board.DISPLAY.width, board.DISPLAY.height, fill=0x0f0f23)
+# bg = Rect(0, 0, board.DISPLAY.width, board.DISPLAY.height, fill=COLOR_BGBLUE)
 # disp_group[DGROUP_MAIN].append(bg)
 
 # AOC label at top
-label_aoc = label.Label(font, text="Advent of Code\n   int y=2021;", color=0x009900)
+label_aoc = label.Label(font, text="Advent of Code\n   int y=2021;", color=COLOR_AOCGREEN)
 label_aoc.anchor_point = (0.0,0.0) # upper left
 label_aoc.anchored_position = (0,0)
 disp_group[DGROUP_MAIN].append(label_aoc)
@@ -217,7 +236,7 @@ label_1st.anchor_point = (0.0,0.0) # left top
 label_1st.anchored_position = (0,60)
 disp_group[DGROUP_MAIN].append(label_1st)
 
-label_1st_stars = label.Label(font,text="    38*",color=0xFFFF66)
+label_1st_stars = label.Label(font,text="    38*",color=COLOR_AOCYELLOW)
 label_1st_stars.anchor_point = (0.0,0.0) # left top
 label_1st_stars.anchored_position = (-1,60+1)
 disp_group[DGROUP_MAIN].append(label_1st_stars)
@@ -228,7 +247,7 @@ label_2nd.anchor_point = (0.0,0.0) # left top
 label_2nd.anchored_position = (0,75)
 disp_group[DGROUP_MAIN].append(label_2nd)
 
-label_2nd_stars = label.Label(font,text="    36*",color=0xFFFF66)
+label_2nd_stars = label.Label(font,text="    36*",color=COLOR_AOCYELLOW)
 label_2nd_stars.anchor_point = (0.0,0.0) # left top
 label_2nd_stars.anchored_position = (-1,75+1)
 disp_group[DGROUP_MAIN].append(label_2nd_stars)
@@ -239,10 +258,16 @@ label_3rd.anchor_point = (0.0,0.0) # left top
 label_3rd.anchored_position = (0,90)
 disp_group[DGROUP_MAIN].append(label_3rd)
 
-label_3rd_stars = label.Label(font,text="    31*",color=0xFFFF66)
+label_3rd_stars = label.Label(font,text="    31*",color=COLOR_AOCYELLOW)
 label_3rd_stars.anchor_point = (0.0,0.0) # left top
 label_3rd_stars.anchored_position = (-1,90+1)
 disp_group[DGROUP_MAIN].append(label_3rd_stars)
+
+# push button for more...
+label_more = label.Label(font,text="push button for more",color=COLOR_BLACK)
+label_more.anchor_point = (0.5,1.0) # middle bottom
+label_more.anchored_position = (board.DISPLAY.width/2,board.DISPLAY.height)
+disp_group[DGROUP_MAIN].append(label_more)
 
 # build disp_group[DGROUP_50STARS] -----------------------
 
@@ -251,7 +276,7 @@ disp_group[DGROUP_MAIN].append(label_3rd_stars)
 # disp_group[DGROUP_50STARS].append(bg)
 
 # AOC label at top
-label_aoc = label.Label(font, text="Advent of Code\n   int y=2021;", color=0x009900)
+label_aoc = label.Label(font, text="Advent of Code\n   int y=2021;", color=COLOR_AOCGREEN)
 label_aoc.anchor_point = (0.0,0.0) # left top
 label_aoc.anchored_position = (0,0)
 disp_group[DGROUP_50STARS].append(label_aoc)
@@ -276,7 +301,8 @@ disp_group[DGROUP_50STARS].append(label_firstto50date)
 
 # stars
 # label_stars = label.Label(font,text="0123456789012345678901234",color=0xffff66) # only 20 chars show
-label_stars = label.Label(font,text=("*"*MAX_CHAR),color=0xffff66)
+#label_stars = label.Label(font,text=("*"*MAX_CHAR),color=COLOR_YELLOW)
+label_stars = label.Label(font,text=(" "*MAX_CHAR),color=COLOR_AOCYELLOW)
 label_stars.anchor_point = (0.0,0.0) # middle top
 label_stars.anchored_position = (0,100)
 disp_group[DGROUP_50STARS].append(label_stars)
@@ -290,7 +316,7 @@ disp_group[DGROUP_50STARS].append(label_stars)
 
 # AOC label at top
 # label_aoc = label.Label(font, text="Advent of Code\n   int y=2021;", color=0x009900)
-label_aoc = label.Label(font, text="AoC 2021      Day 11", color=0x009900)
+label_aoc = label.Label(font, text="AoC 2021      Day 11", color=COLOR_AOCGREEN)
 label_aoc.anchor_point = (0.0,0.0) # left top
 label_aoc.anchored_position = (0,0)
 disp_group[DGROUP_2021DAY11].append(label_aoc)
@@ -336,9 +362,9 @@ for ir in range(10):
         disp_circles.append( Circle( cir_start_x+radius+1+(2*radius+2)*ir,
                                      cir_start_y+radius+1+(2*radius+2)*ic, 
                                      radius,
-                                     fill=0x000000, # 0xFFFFFF
+                                     fill=COLOR_BLACK, # COLOR_WHITE
                                      stroke=1,
-                                     outline=0x000000) )
+                                     outline=COLOR_BLACK) )
 
         disp_group[DGROUP_2021DAY11].append(disp_circles[-1])
 
@@ -358,21 +384,43 @@ colormap.append(0xD1D1D1) # 8
 colormap.append(0xE8E8E8) # 9
 colormap.append(0xFFFFFF) # 10+
 
-# establish global variables for demo and initialize
-step = 0
-flash_count = 0
-step_delay_sec = 1.0
-MAX_STEP = const(9999)
-init_demo()
+# neopixel init
+if USE_NEOPIXELS:
+    pin_neopixel = board.NEOPIXEL
+    num_neopixel = 5
+    neopixels = neopixel.NeoPixel(pin_neopixel, num_neopixel, pixel_order=neopixel.GRB,
+                                brightness=0.01, auto_write=False)
+    neopixels.fill(COLOR_BLACK) # turn off
+    neopixels.show()
+
+# establish global variables for all states
+
+main_more_delay_sec = 2.0
+main_more_delay_on = False
+main_more_change_time = time.monotonic() + 2.0*main_more_delay_sec 
+# delay a little extra the first time
+
+fiftystar_stars = 0
+fiftystar_count_delay_sec = 1.0
+fiftystar_flash_on = True
+fiftystar_flash_count = 0
+fiftystar_flash_delay_sec = 1.0
+fiftystar_change_time = 0.0
+FIFTYSTAR_FLASHES = const(4)
+
+demo_step = 0
+demo_flash_count = 0
+demo_step_delay_sec = 1.0
+DEMO_MAX_STEP = const(9999)
 
 # init display
 board.DISPLAY.show(disp_group[DGROUP_MAIN])
 
-print("DEBUG: END OF SETUP")
+print("INFO: END OF SETUP")
 
 # LOOP -----------------------------------------------------------------------
 
-print("DEBUG: STARTING LOOP...")
+print("INFO: STARTING LOOP...")
 
 dgroup_show = 0
 
@@ -380,82 +428,149 @@ while True:
 
     # do state actions
     if dgroup_show == DGROUP_MAIN:
-        pass
+        if time.monotonic() >= main_more_change_time:
+            if main_more_delay_on:
+                label_more.color = COLOR_BLACK # turn "off" text
+                main_more_delay_on = False
+            else: 
+                label_more.color = COLOR_GRAY # turn "on" text
+                main_more_delay_on = True
+
+            main_more_change_time = time.monotonic() + main_more_delay_sec
+
     elif dgroup_show == DGROUP_50STARS:
-        pass
+        if time.monotonic() >= fiftystar_change_time:
+            if fiftystar_stars < MAX_CHAR:
+                fiftystar_stars += 1
+                update_label_stars(fiftystar_stars)
+                if USE_NEOPIXELS:
+                    for i in range(num_neopixel):
+                        neopixels[i] = COLOR_BLACK
+                    for i in range(floor(fiftystar_stars/(MAX_CHAR/num_neopixel))):
+                        neopixels[i] = COLOR_YELLOW
+                    neopixels.show()
+                
+                if fiftystar_stars == MAX_CHAR:
+                    fiftystar_flash_on = True
+                    fiftystar_change_time = time.monotonic() + fiftystar_flash_delay_sec
+                else:
+                    fiftystar_change_time = time.monotonic() + fiftystar_count_delay_sec
+
+            else: # on max stars
+                if fiftystar_flash_count < FIFTYSTAR_FLASHES:
+                    if fiftystar_flash_on: # if they were on, now turn off
+                        update_label_stars(0)
+                        if USE_NEOPIXELS:
+                            neopixels.fill(COLOR_BLACK)
+                            neopixels.show()
+                        fiftystar_flash_on = False
+                        fiftystar_flash_count += 1
+                        
+                    else: # if they were off, now turn on
+                        update_label_stars(MAX_CHAR)
+                        if USE_NEOPIXELS:
+                            neopixels.fill(COLOR_YELLOW)
+                            neopixels.show()
+                        fiftystar_flash_on = True
+
+                    fiftystar_change_time = time.monotonic() + fiftystar_flash_delay_sec
+
+                else: # last flash
+                    fiftystar_flash_on = True 
+                    fiftystar_flash_count = 0
+                    fiftystar_stars = 0
+                    update_label_stars(0)
+                    fiftystar_change_time = time.monotonic() + fiftystar_count_delay_sec
+
+
     elif dgroup_show == DGROUP_2021DAY11:
-        if time.monotonic() >= next_step_time and step <= MAX_STEP:
+        if time.monotonic() >= demo_next_step_time and demo_step <= DEMO_MAX_STEP:
 
             # inc step
-            step += 1
-            update_label_stepval(step)
+            demo_step += 1
+            update_label_stepval(demo_step)
                     
             # increase energy and update display
             for ir in range(10):
                 for ic in range(10):
-                    energy[ir][ic] += 1
-                    disp_circles[cir_lindex(ir,ic)].fill = colormap[int(min(energy[ir][ic],10))]
-                    disp_circles[cir_lindex(ir,ic)].outline = colormap[int(min(energy[ir][ic],10))]
-                    if energy[ir][ic] >= 10:
+                    demo_energy[ir][ic] += 1
+                    disp_circles[cir_lindex(ir,ic)].fill = colormap[int(min(demo_energy[ir][ic],10))]
+                    disp_circles[cir_lindex(ir,ic)].outline = colormap[int(min(demo_energy[ir][ic],10))]
+                    if demo_energy[ir][ic] >= 10:
                         disp_circles[cir_lindex(ir,ic)].outline = 0xFFFF66
 
             time.sleep(0.1) # not ideal, but want some visual delay
             
             # find inital flashers
-            flashers = find_flashers(energy)
+            flashers = find_flashers(demo_energy)
             
             # propogate flashes and update display
             new_flashers = copy_set(flashers)
             while len(new_flashers) > 0:
                 for (ir,ic) in new_flashers:
-                    energy = increment_neighbors(energy,ir,ic) 
+                    demo_energy = increment_neighbors(demo_energy,ir,ic) 
                     disp_circles[cir_lindex(ir,ic)].fill = colormap[10]
                     disp_circles[cir_lindex(ir,ic)].outline = 0xFFFF66
                 time.sleep(0.1) #  not ideal, but want some visual delay
                 flashers |= new_flashers
-                new_flashers = find_flashers(energy) - flashers 
+                new_flashers = find_flashers(demo_energy) - flashers 
                     
             # reset energy levels of flashers
-            flashed = find_flashers(energy)
+            flashed = find_flashers(demo_energy)
             
             if len(flashed) == (100):
-                print("ALL FLASHED at step = %d"%(step+1))
+                print("INFO: DEMO: ALL FLASHED at step = %d"%(demo_step+1))
                 #break
             
-            flash_count += len(flashed)
+            demo_flash_count += len(flashed)
 
             if len(flashed) > 0:
                 time.sleep(0.1) #  not ideal, but want some visual delay
 
             for (ir,ic) in flashed:
-                energy[ir][ic] = 0
+                demo_energy[ir][ic] = 0
                 disp_circles[cir_lindex(ir,ic)].fill = colormap[0]
                 disp_circles[cir_lindex(ir,ic)].outline = colormap[0]
 
-            update_label_flashval(flash_count)
+            update_label_flashval(demo_flash_count)
 
             # set time for next step increment
-            next_step_time = time.monotonic() + step_delay_sec
+            demo_next_step_time = time.monotonic() + demo_step_delay_sec
     else:
-        print("undefined state: %d"%dgroup_show)
+        print("ERROR: undefined state: %d"%dgroup_show)
 
     # detect button presses
     ke = event = keys.events.get()
     if ke: # if any key press event is happening
-        print("detected key press = %d"%ke.key_number)
+        print("INFO: detected key press = %d"%ke.key_number)
         dgroup_show = (dgroup_show+1)%len(disp_group)
         board.DISPLAY.show(disp_group[dgroup_show])
 
         # do state transition stuff, if necessary
+        if USE_NEOPIXELS:
+            neopixels.fill(COLOR_BLACK) # turn off all neopixels on any state transition
+            neopixels.show()
+
         if dgroup_show == DGROUP_MAIN:
-            pass
+            print("INFO: transitioning to MAIN/LEADERBOARD screen")
+            main_more_delay_on = False
+            label_more.color = COLOR_BLACK
+            main_more_change_time = time.monotonic() + 2.0*main_more_delay_sec
+
         elif dgroup_show == DGROUP_50STARS:
-            pass
+            print("INFO: transitioning to 50* screen")
+            fiftystar_stars = 0
+            update_label_stars(0)
+            fiftystar_flash_count = 0
+            fiftystar_time_change = time.monotonic() + 2.0*fiftystar_flash_delay_sec
+
         elif dgroup_show == DGROUP_2021DAY11:
+            print("INFO: transitioning to DEMO screen")
             init_demo()
-            next_step_time = time.monotonic() + 2*step_delay_sec
+            demo_next_step_time = time.monotonic() + 2.0*demo_step_delay_sec
+
         else:
-            print("undefined state transition: %d"%dgroup_show)
+            print("ERROR: undefined state transition: %d"%dgroup_show)
 
         time.sleep(0.5) # pause to ignore registering too many clicks
         keys.events.clear()   
