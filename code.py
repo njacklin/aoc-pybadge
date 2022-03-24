@@ -389,7 +389,7 @@ if USE_NEOPIXELS:
     pin_neopixel = board.NEOPIXEL
     num_neopixel = 5
     neopixels = neopixel.NeoPixel(pin_neopixel, num_neopixel, pixel_order=neopixel.GRB,
-                                brightness=0.01, auto_write=False)
+                                brightness=0.02, auto_write=False)
     neopixels.fill(COLOR_BLACK) # turn off
     neopixels.show()
 
