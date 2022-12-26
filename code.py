@@ -1,4 +1,5 @@
 # Advent of Code "Trophy"
+# 2022 Edition
 
 
 # PARAMETERS AND CONSTANTS ----------------------------------------------------
@@ -94,7 +95,7 @@ def init_demo():
         f.close()
 
 # find (r,c) indices of "flashing" energy values 
-# from AoC 2021 day 11 solution
+# from AoC 2022 day 11 solution
 def find_flashers(octomap):
     (nrows,ncols) = octomap.shape
     
@@ -109,7 +110,7 @@ def find_flashers(octomap):
 
 
 # find "neighbors" and increment energy values 
-# from AoC 2021 day 11 solution
+# from AoC 2022 day 11 solution
 def increment_neighbors(octomap,i,j):
     (nrows,ncols) = octomap.shape
     
@@ -184,13 +185,13 @@ font = bitmap_font.load_font("fonts/SourceCodePro-subset_32_126-10pt.bdf",
 disp_group = list()
 disp_group.append(displayio.Group()) # disp_group[0] for main leaderboard
 disp_group.append(displayio.Group()) # disp_group[1] for first-to-50 stars
-disp_group.append(displayio.Group()) # disp_group[2] for 2021 day11 demo
+disp_group.append(displayio.Group()) # disp_group[2] for 2022 day14 demo
 DGROUP_MAIN      = const(0)
 DGROUP_50STARS   = const(1)
-DGROUP_2021DAY11 = const(2)
+DGROUP_2022DAY14 = const(2)
 
 # build common display group assets - DOES NOT WORK, CANNOT ADD OBJECTS TO MULTIPLE DISPLAY GROUPS
-#label_aoc = label.Label(font, text="Advent of Code\n  int y=2021;", color=0x009900)
+#label_aoc = label.Label(font, text="Advent of Code\n  int y=202x;", color=0x009900)
 #label_aoc.anchor_point = (0.0,0.0) # upper left
 #label_aoc.anchored_position = (0,0)
 
@@ -219,7 +220,7 @@ keys = keypad.ShiftRegisterKeys(
 # disp_group[DGROUP_MAIN].append(bg)
 
 # AOC label at top
-label_aoc = label.Label(font, text="Advent of Code\n   int y=2021;", color=COLOR_AOCGREEN)
+label_aoc = label.Label(font, text="Advent of Code\n   int y=2022;", color=COLOR_AOCGREEN)
 label_aoc.anchor_point = (0.0,0.0) # upper left
 label_aoc.anchored_position = (0,0)
 disp_group[DGROUP_MAIN].append(label_aoc)
@@ -231,34 +232,34 @@ label_leaderboard.anchored_position = (board.DISPLAY.width/2,45)
 disp_group[DGROUP_MAIN].append(label_leaderboard)
 
 # first place
-label_1st = label.Label(font,text="1st:    John Moon")
+label_1st = label.Label(font,text="1st:   Sean McCarthy")
 label_1st.anchor_point = (0.0,0.0) # left top
 label_1st.anchored_position = (0,60)
 disp_group[DGROUP_MAIN].append(label_1st)
 
-label_1st_stars = label.Label(font,text="    38*",color=COLOR_AOCYELLOW)
+label_1st_stars = label.Label(font,text="    41*",color=COLOR_AOCYELLOW)
 label_1st_stars.anchor_point = (0.0,0.0) # left top
 label_1st_stars.anchored_position = (-1,60+1)
 disp_group[DGROUP_MAIN].append(label_1st_stars)
 
 # second place
-label_2nd = label.Label(font,text="2nd:    Neil Jacklin")
+label_2nd = label.Label(font,text="2nd:   DaveBuscaglia")
 label_2nd.anchor_point = (0.0,0.0) # left top
 label_2nd.anchored_position = (0,75)
 disp_group[DGROUP_MAIN].append(label_2nd)
 
-label_2nd_stars = label.Label(font,text="    36*",color=COLOR_AOCYELLOW)
+label_2nd_stars = label.Label(font,text="    39*",color=COLOR_AOCYELLOW)
 label_2nd_stars.anchor_point = (0.0,0.0) # left top
 label_2nd_stars.anchored_position = (-1,75+1)
 disp_group[DGROUP_MAIN].append(label_2nd_stars)
 
 # third place
-label_3rd = label.Label(font,text="3rd:   DaveBuscaglia")
+label_3rd = label.Label(font,text="3rd:    Ash Evans")
 label_3rd.anchor_point = (0.0,0.0) # left top
 label_3rd.anchored_position = (0,90)
 disp_group[DGROUP_MAIN].append(label_3rd)
 
-label_3rd_stars = label.Label(font,text="    31*",color=COLOR_AOCYELLOW)
+label_3rd_stars = label.Label(font,text="    34*",color=COLOR_AOCYELLOW)
 label_3rd_stars.anchor_point = (0.0,0.0) # left top
 label_3rd_stars.anchored_position = (-1,90+1)
 disp_group[DGROUP_MAIN].append(label_3rd_stars)
@@ -276,7 +277,7 @@ disp_group[DGROUP_MAIN].append(label_more)
 # disp_group[DGROUP_50STARS].append(bg)
 
 # AOC label at top
-label_aoc = label.Label(font, text="Advent of Code\n   int y=2021;", color=COLOR_AOCGREEN)
+label_aoc = label.Label(font, text="Advent of Code\n   int y=2022;", color=COLOR_AOCGREEN)
 label_aoc.anchor_point = (0.0,0.0) # left top
 label_aoc.anchored_position = (0,0)
 disp_group[DGROUP_50STARS].append(label_aoc)
@@ -288,13 +289,13 @@ label_firstto50.anchored_position = (board.DISPLAY.width/2,45)
 disp_group[DGROUP_50STARS].append(label_firstto50)
 
 # Name
-label_firstto50name = label.Label(font,text="Dave Buscaglia")
+label_firstto50name = label.Label(font,text="~ UNCLAIMED ~")
 label_firstto50name.anchor_point = (0.5,0.0) # middle top
 label_firstto50name.anchored_position = (board.DISPLAY.width/2,60)
 disp_group[DGROUP_50STARS].append(label_firstto50name)
 
 # Date
-label_firstto50date = label.Label(font,text="7 MAR 2022")
+label_firstto50date = label.Label(font,text="   TBD   ")
 label_firstto50date.anchor_point = (0.5,0.0) # middle top
 label_firstto50date.anchored_position = (board.DISPLAY.width/2,75)
 disp_group[DGROUP_50STARS].append(label_firstto50date)
@@ -308,48 +309,48 @@ label_stars.anchored_position = (0,100)
 disp_group[DGROUP_50STARS].append(label_stars)
 
 
-# build disp_group[DGROUP_2021DAY11] ---------------------
+# build disp_group[DGROUP_2022DAY14] ---------------------
 
 # # background -- looks bad when display is viewed from the side
 # bg = Rect(0, 0, board.DISPLAY.width, board.DISPLAY.height, fill=0x0f0f23)
-# disp_group[DGROUP_2021DAY11].append(bg)
+# disp_group[DGROUP_2022DAY14].append(bg)
 
 # AOC label at top
-# label_aoc = label.Label(font, text="Advent of Code\n   int y=2021;", color=0x009900)
-label_aoc = label.Label(font, text="AoC 2021      Day 11", color=COLOR_AOCGREEN)
+# label_aoc = label.Label(font, text="Advent of Code\n   int y=2022;", color=0x009900)
+label_aoc = label.Label(font, text="AoC 2022      Day 14", color=COLOR_AOCGREEN)
 label_aoc.anchor_point = (0.0,0.0) # left top
 label_aoc.anchored_position = (0,0)
-disp_group[DGROUP_2021DAY11].append(label_aoc)
+disp_group[DGROUP_2022DAY14].append(label_aoc)
 
 # "Step" label
 label_step = label.Label(font, text="Step")
 label_step.anchor_point = (0.0,0.0) # left top
 label_step.anchored_position = (0,27)
-disp_group[DGROUP_2021DAY11].append(label_step)
+disp_group[DGROUP_2022DAY14].append(label_step)
 
 # Step value label
 label_stepval = label.Label(font, text="0000")
 label_stepval.anchor_point = (0.0,0.0) # left top
 label_stepval.anchored_position = (0,42)
-disp_group[DGROUP_2021DAY11].append(label_stepval)
+disp_group[DGROUP_2022DAY14].append(label_stepval)
 
 # "Flashes" label
 labl_flash = label.Label(font, text="Flashes")
 labl_flash.anchor_point = (0.0,0.0) # left top
 labl_flash.anchored_position = (0,100)
-disp_group[DGROUP_2021DAY11].append(labl_flash)
+disp_group[DGROUP_2022DAY14].append(labl_flash)
 
 # Flash value label
 label_flashval = label.Label(font, text="000000")
 label_flashval.anchor_point = (0.0,0.0) # left top
 label_flashval.anchored_position = (0,115)
-disp_group[DGROUP_2021DAY11].append(label_flashval)
+disp_group[DGROUP_2022DAY14].append(label_flashval)
 
-# # "Day 11 Demo" label at the bottom
-# label_demo = label.Label(font,text="2021 DAY 11")
+# # "Day 14 Demo" label at the bottom
+# label_demo = label.Label(font,text="2022 DAY 14")
 # label_demo.anchor_point = (0.5,1.0) # middle bottom
 # label_demo.anchored_position = (board.DISPLAY.width/2,board.DISPLAY.height)
-# disp_group[DGROUP_2021DAY11].append(label_demo)
+# disp_group[DGROUP_2022DAY14].append(label_demo)
 
 # circles (dumbo ocotopi)
 # TODO?: replace with sprites?
@@ -366,7 +367,7 @@ for ir in range(10):
                                      stroke=1,
                                      outline=COLOR_BLACK) )
 
-        disp_group[DGROUP_2021DAY11].append(disp_circles[-1])
+        disp_group[DGROUP_2022DAY14].append(disp_circles[-1])
 
 # colormap
 # need to colors for energy levels 0 - 10 (11 total), 
@@ -483,7 +484,7 @@ while True:
                     fiftystar_change_time = time.monotonic() + fiftystar_count_delay_sec
 
 
-    elif dgroup_show == DGROUP_2021DAY11:
+    elif dgroup_show == DGROUP_2022DAY14:
         if time.monotonic() >= demo_next_step_time and demo_step <= DEMO_MAX_STEP:
 
             # inc step
@@ -564,7 +565,7 @@ while True:
             fiftystar_flash_count = 0
             fiftystar_time_change = time.monotonic() + 2.0*fiftystar_flash_delay_sec
 
-        elif dgroup_show == DGROUP_2021DAY11:
+        elif dgroup_show == DGROUP_2022DAY14:
             print("INFO: transitioning to DEMO screen")
             init_demo()
             demo_next_step_time = time.monotonic() + 2.0*demo_step_delay_sec
