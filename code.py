@@ -16,6 +16,9 @@ COLOR_BLACK  = 0x000000
 COLOR_GRAY   = 0x888888
 COLOR_YELLOW = 0xFFFF00
 
+COLOR_ROCK   = COLOR_GRAY
+COLOR_SAND   = COLOR_YELLOW
+
 # IMPORTS --------------------------------------------------------------------
 import board
 import displayio
@@ -251,10 +254,16 @@ demo_size_width  = int(board.DISPLAY.width-demo_hoffset)
 
 print('DEBUG: size of occ* is (%d,%d)'%(demo_size_height,demo_size_width))
 
-occRock = np.zeros((demo_size_height,demo_size_width),dtype=np.bool) 
-occSand = np.zeros((demo_size_height,demo_size_width),dtype=np.bool)
+# change to occupied array, and record ROCK or SAND
+# this will conserve RAM, because arrays of bools don't work in circuitpython
+# (specifically, you can't index into them properly for some reason)
+demo_occ = np.zeros((demo_size_height,demo_size_width),dtype=np.int8) # bool does not work properly
+ROCK = const(1)
+SAND = const(2)
 
 demo_sand_startpos = (0,int(demo_size_width/2))
+
+demo_step_delay_sec = 1.0
 
 
 # one-time setup for demo screen ----------------------------
@@ -264,16 +273,13 @@ demo_sand_startpos = (0,int(demo_size_width/2))
 try:
     f = open("aoc2022_day14_init.txt")
     print("reading init file")
-    
 except:
     f = open("aoc2022_day14_ex.txt")
-    print("using default init") # TODO
+    print("using default init") 
     
 
 regex_space = re.compile(" ")
 regex_comma = re.compile(",")
-
-print("DEBUG: occRock.size = %d"%occRock.size)
 
 for line in f.readlines():
     # skip short lines
@@ -287,43 +293,85 @@ for line in f.readlines():
     current = (0,0)
     for s in regex_space.split(line):
         # skip short segments and arrows
-        if len(s) <= 1 or s == "->":
-            next 
+        if len(s) < 3:
+            continue 
             
-        print("DEBUG: processing coords = '%s'"%s)
+        # print("DEBUG: processing coords = '%s' of len = %d"%(s,len(s)))
             
         # parse coordinates
         coord = [0,0]
         for (iscm,scm) in enumerate(regex_comma.split(s)):
             coord[iscm] = int(scm)
             
-        print("DEBUG: coord parsed is (%d,%d)"%(coord[0],coord[1]))
+        # print("DEBUG: coord parsed is (%d,%d)"%(coord[0],coord[1]))
             
-        # fill in occRock and draw rocks as rectangles
+        # fill in demo_occ and draw rocks as rectangles
         if ipair == 0:
             current = tuple(coord) 
-            occRock[occ_lindext(current)] = True 
+            demo_occ[current] = ROCK 
         else: 
             if coord[0] > current[0]: # fill towards right
+                # draw rect
+                this_rect = Rect( current[0] + demo_hoffset, 
+                                  current[1] + demo_voffset, 
+                                  coord[0] - current[0] + 1, 
+                                  1, 
+                                  fill = COLOR_ROCK )
+                disp_group[DGROUP_2022DAY14].append(this_rect)
+                # fill in demo_occ 
                 for i in range(coord[0]-current[0]):
                     current = (current[0]+1, current[1]) 
-                    occRock[occ_lindext(current)] = True 
+                    demo_occ[current] = ROCK 
             elif coord[0] < current[0]: # fill towards left
+                # draw rect
+                this_rect = Rect( coord[0] + demo_hoffset, 
+                                  current[1] + demo_voffset, 
+                                  current[0] - coord[0] + 1, 
+                                  1, 
+                                  fill = COLOR_ROCK )
+                disp_group[DGROUP_2022DAY14].append(this_rect)
+                # fill in demo_occ 
                 for i in range(current[0]-coord[0]):
                     current = (current[0]-1, current[1]) 
-                    occRock[occ_lindext(current)] = True 
+                    demo_occ[current] = ROCK 
             elif coord[1] > current[1]: # fill downward
+                # draw rect
+                this_rect = Rect( current[0] + demo_hoffset, 
+                                  current[1] + demo_voffset, 
+                                  1, 
+                                  coord[1] - current[1] + 1, 
+                                  fill = COLOR_ROCK )
+                disp_group[DGROUP_2022DAY14].append(this_rect)
+                # fill in demo_occ 
                 for i in range(coord[1]-current[1]):
                     current = (current[0], current[1]+1) 
-                    occRock[occ_lindext(current)] = True 
+                    demo_occ[current] = ROCK 
             elif coord[1] < current[1]: # fill upward
+                # draw rect
+                this_rect = Rect( current[0] + demo_hoffset, 
+                                  coord[1] + demo_voffset, 
+                                  1, 
+                                  current[1] - coord[1] + 1, 
+                                  fill = COLOR_ROCK )
+                disp_group[DGROUP_2022DAY14].append(this_rect)
+                # fill in demo_occ 
                 for i in range(current[1]-coord[1]):
                     current = (current[0], current[1]-1) 
-                    occRock[occ_lindext(current)] = True 
+                    demo_occ[current] = ROCK 
             else: # this should only happen if a repeated point is given
-                occRock[occ_lindext(current)] = True
+                # draw rect
+                this_rect = Rect( current[0] + demo_hoffset, 
+                                  current[1] + demo_voffset, 
+                                  1, 
+                                  1, 
+                                  fill = COLOR_ROCK )
+                disp_group[DGROUP_2022DAY14].append(this_rect)
+                # fill in demo_occ 
+                demo_occ[current] = ROCK 
                 
-            assert(current==coord)
+            # print("DEBUG: coord   = (%d,%d)"%(coord[0],coord[1]))
+            # print("DEBUG: current = (%d,%d)"%(current[0],current[1]))
+            # assert(current==coord) # fails incorrectly
             
         ipair += 1
 
@@ -440,7 +488,7 @@ while True:
         elif dgroup_show == DGROUP_2022DAY14:
             print("INFO: transitioning to DEMO screen")
             init_demo()
-            demo_next_step_time = time.monotonic() + 2.0*demo_step_delay_sec
+            demo_next_step_time = time.monotonic() + 2.0*demo_step_delay_sec# TODO update
 
         else:
             print("ERROR: undefined state transition: %d"%dgroup_show)
