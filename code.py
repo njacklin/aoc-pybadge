@@ -4,7 +4,7 @@
 
 # PARAMETERS AND CONSTANTS ----------------------------------------------------
 
-USE_NEOPIXELS = True # set to True or False... one board is defective :-(
+USE_NEOPIXELS = False # set to True or False... one board is defective :-(
 
 MAX_CHAR = 20 # max number of text chars that can fit, based on observation
 
@@ -23,9 +23,13 @@ import keypad
 from math import floor
 import neopixel
 import random
+import re 
+# note limitations of circuitpython re module here: 
+    # https://docs.circuitpython.org/en/latest/docs/library/re.html
 import time
-import ulab.numpy as np
-
+import ulab.numpy as np 
+# note limitations of circuitpython ulab.numpy module here: 
+    # https://micropython-ulab.readthedocs.io/en/latest/ulab-intro.html
 from adafruit_bitmap_font import bitmap_font
 from adafruit_display_text import label
 from adafruit_display_shapes.rect import Rect
@@ -33,19 +37,14 @@ from adafruit_display_shapes.circle import Circle
 
 # HELPER FUNCTIONS -----------------------------------------------------------
 
-# convenience function to convert (r,c) coords to linear index for circle array
-def cir_lindex(r,c):
-    return int( 10*c + r )
+# convenience function to convert (r,c) coords to linear index for occ{Rock,Sand} array
+def occ_lindex(r,c):
+    global demo_size_width
+    return int( demo_size_width*c + r )
 
-# set step count label
-def update_label_stepval(sv): # takes in an int
-    global label_stepval
-    label_stepval.text = "%04d"%sv
-
-# set flash count label
-def update_label_flashval(fv): # takes in an int
-    global label_flashval
-    label_flashval.text = "%06d"%fv
+def occ_lindext(coordtuple):
+    global demo_size_width
+    return int( demo_size_width*coordtuple[1] + coordtuple[0] )
 
 # set stars label 
 def update_label_stars(star_count): 
@@ -61,110 +60,7 @@ def init_demo():
     global demo_step
     
     # set global variables to initial values
-    demo_energy = np.zeros((10,10))
-    demo_step = 0
-    demo_flash_count = 0
 
-    update_label_stepval(demo_step)
-    update_label_flashval(demo_flash_count)
-
-    # read input file or generate random input
-    try:
-        f = open("aoc2021_day11_init.txt")
-        bInitFile = True
-        print("reading init file")
-    except:
-        bInitFile = False
-        print("generating random init")
-
-    for ir in range(10):
-        if bInitFile:
-            line = f.readline()
-
-        for ic in range(10):
-            if bInitFile: 
-                v = int(line[ic])
-            else:
-                v = random.randint(0,8)
-
-            demo_energy[ir][ic] = v
-            disp_circles[cir_lindex(ir,ic)].fill = colormap[v]
-            disp_circles[cir_lindex(ir,ic)].outline = colormap[v]
-
-    if bInitFile:
-        f.close()
-
-# find (r,c) indices of "flashing" energy values 
-# from AoC 2022 day 11 solution
-def find_flashers(octomap):
-    (nrows,ncols) = octomap.shape
-    
-    flashers = set()
-    
-    for i in range(nrows):
-        for j in range(ncols):
-            if octomap[i][j] > 9:
-                flashers |= {(i,j)}
-                
-    return flashers
-
-
-# find "neighbors" and increment energy values 
-# from AoC 2022 day 11 solution
-def increment_neighbors(octomap,i,j):
-    (nrows,ncols) = octomap.shape
-    
-    if i == 0 and j == 0 : # upper left corner
-        octomap[i][j+1] += 1
-        octomap[i+1][j] += 1 
-        octomap[i+1][j+1] += 1
-    elif i == 0 and j == ncols-1: # upper right corner
-        octomap[i][j-1] += 1 
-        octomap[i+1][j] += 1 
-        octomap[i+1][j-1] += 1
-    elif i == 0: # top row middle
-        octomap[i][j-1] += 1  
-        octomap[i][j+1] += 1  
-        octomap[i+1][j] += 1
-        octomap[i+1][j-1] += 1  
-        octomap[i+1][j+1] += 1   
-    elif i == nrows-1 and j == 0: # lower left corner
-        octomap[i-1][j] += 1 
-        octomap[i][j+1] += 1 
-        octomap[i-1][j+1] += 1  
-    elif i == nrows-1 and j == ncols-1: # lower right corner
-        octomap[i-1][j] += 1
-        octomap[i][j-1] += 1 
-        octomap[i-1][j-1] += 1  
-    elif i == nrows-1: # bottom row middle
-        octomap[i-1][j] += 1 
-        octomap[i][j-1] += 1 
-        octomap[i][j+1] += 1 
-        octomap[i-1][j-1] += 1  
-        octomap[i-1][j+1] += 1  
-    elif j == 0: # left middle
-        octomap[i-1][j] += 1 
-        octomap[i][j+1] += 1 
-        octomap[i+1][j] += 1 
-        octomap[i-1][j+1] += 1  
-        octomap[i+1][j+1] += 1  
-    elif j == ncols-1: # right middle
-        octomap[i-1][j] += 1 
-        octomap[i][j-1] += 1 
-        octomap[i+1][j] += 1 
-        octomap[i-1][j-1] += 1  
-        octomap[i+1][j-1] += 1  
-    else: # middle
-        octomap[i-1][j] += 1 
-        octomap[i][j-1] += 1 
-        octomap[i][j+1] += 1 
-        octomap[i+1][j] += 1 
-        octomap[i-1][j-1] += 1  
-        octomap[i-1][j+1] += 1  
-        octomap[i+1][j-1] += 1  
-        octomap[i+1][j+1] += 1  
-    
-    return octomap
 
 # copy set function (should work like copy.deepcopy, but for a set)
 def copy_set(inset):
@@ -322,70 +218,7 @@ label_aoc.anchor_point = (0.0,0.0) # left top
 label_aoc.anchored_position = (0,0)
 disp_group[DGROUP_2022DAY14].append(label_aoc)
 
-# "Step" label
-label_step = label.Label(font, text="Step")
-label_step.anchor_point = (0.0,0.0) # left top
-label_step.anchored_position = (0,27)
-disp_group[DGROUP_2022DAY14].append(label_step)
-
-# Step value label
-label_stepval = label.Label(font, text="0000")
-label_stepval.anchor_point = (0.0,0.0) # left top
-label_stepval.anchored_position = (0,42)
-disp_group[DGROUP_2022DAY14].append(label_stepval)
-
-# "Flashes" label
-labl_flash = label.Label(font, text="Flashes")
-labl_flash.anchor_point = (0.0,0.0) # left top
-labl_flash.anchored_position = (0,100)
-disp_group[DGROUP_2022DAY14].append(labl_flash)
-
-# Flash value label
-label_flashval = label.Label(font, text="000000")
-label_flashval.anchor_point = (0.0,0.0) # left top
-label_flashval.anchored_position = (0,115)
-disp_group[DGROUP_2022DAY14].append(label_flashval)
-
-# # "Day 14 Demo" label at the bottom
-# label_demo = label.Label(font,text="2022 DAY 14")
-# label_demo.anchor_point = (0.5,1.0) # middle bottom
-# label_demo.anchored_position = (board.DISPLAY.width/2,board.DISPLAY.height)
-# disp_group[DGROUP_2022DAY14].append(label_demo)
-
-# circles (dumbo ocotopi)
-# TODO?: replace with sprites?
-radius = const(4)
-cir_start_x = const(57)
-cir_start_y = const(25) 
-disp_circles = list()
-for ir in range(10):
-    for ic in range(10):
-        disp_circles.append( Circle( cir_start_x+radius+1+(2*radius+2)*ir,
-                                     cir_start_y+radius+1+(2*radius+2)*ic, 
-                                     radius,
-                                     fill=COLOR_BLACK, # COLOR_WHITE
-                                     stroke=1,
-                                     outline=COLOR_BLACK) )
-
-        disp_group[DGROUP_2022DAY14].append(disp_circles[-1])
-
-# colormap
-# need to colors for energy levels 0 - 10 (11 total), 
-# and 0 should be dark gray but not black; 10 is the "flashing" color
-colormap = list()
-colormap.append(0x171717) # 0
-colormap.append(0x2E2E2E) # 1
-colormap.append(0x464646) # 2
-colormap.append(0x5D5D5D) # 3
-colormap.append(0x747474) # 4
-colormap.append(0x8B8B8B) # 5
-colormap.append(0xA2A2A2) # 6
-colormap.append(0xB9B9B9) # 7
-colormap.append(0xD1D1D1) # 8
-colormap.append(0xE8E8E8) # 9
-colormap.append(0xFFFFFF) # 10+
-
-# neopixel init
+# neopixel init ------------------------------------------
 if USE_NEOPIXELS:
     pin_neopixel = board.NEOPIXEL
     num_neopixel = 5
@@ -394,7 +227,7 @@ if USE_NEOPIXELS:
     neopixels.fill(COLOR_BLACK) # turn off
     neopixels.show()
 
-# establish global variables for all states
+# establish global variables for all states ---------------
 
 main_more_delay_sec = 2.0
 main_more_delay_on = False
@@ -409,12 +242,96 @@ fiftystar_flash_delay_sec = 1.0
 fiftystar_change_time = 0.0
 FIFTYSTAR_FLASHES = const(4)
 
-demo_step = 0
-demo_flash_count = 0
-demo_step_delay_sec = 1.0
-DEMO_MAX_STEP = const(9999)
+# demo global vars 
+demo_voffset = const(28)  # offset for start of demo view
+demo_hoffset = const(0)   # offset for start of demo view
 
-# init display
+demo_size_height = int(board.DISPLAY.height-demo_voffset)
+demo_size_width  = int(board.DISPLAY.width-demo_hoffset)
+
+print('DEBUG: size of occ* is (%d,%d)'%(demo_size_height,demo_size_width))
+
+occRock = np.zeros((demo_size_height,demo_size_width),dtype=np.bool) 
+occSand = np.zeros((demo_size_height,demo_size_width),dtype=np.bool)
+
+demo_sand_startpos = (0,int(demo_size_width/2))
+
+
+# one-time setup for demo screen ----------------------------
+# for 2022 day 14 demo, this means drawing the "rocks"
+
+# read input file or use default input
+try:
+    f = open("aoc2022_day14_init.txt")
+    print("reading init file")
+    
+except:
+    f = open("aoc2022_day14_ex.txt")
+    print("using default init") # TODO
+    
+
+regex_space = re.compile(" ")
+regex_comma = re.compile(",")
+
+print("DEBUG: occRock.size = %d"%occRock.size)
+
+for line in f.readlines():
+    # skip short lines
+    if len(line) <= 1:
+        next 
+        
+    print("DEBUG: processing line: %s"%line)
+        
+    # add rocks
+    ipair = 0
+    current = (0,0)
+    for s in regex_space.split(line):
+        # skip short segments and arrows
+        if len(s) <= 1 or s == "->":
+            next 
+            
+        print("DEBUG: processing coords = '%s'"%s)
+            
+        # parse coordinates
+        coord = [0,0]
+        for (iscm,scm) in enumerate(regex_comma.split(s)):
+            coord[iscm] = int(scm)
+            
+        print("DEBUG: coord parsed is (%d,%d)"%(coord[0],coord[1]))
+            
+        # fill in occRock and draw rocks as rectangles
+        if ipair == 0:
+            current = tuple(coord) 
+            occRock[occ_lindext(current)] = True 
+        else: 
+            if coord[0] > current[0]: # fill towards right
+                for i in range(coord[0]-current[0]):
+                    current = (current[0]+1, current[1]) 
+                    occRock[occ_lindext(current)] = True 
+            elif coord[0] < current[0]: # fill towards left
+                for i in range(current[0]-coord[0]):
+                    current = (current[0]-1, current[1]) 
+                    occRock[occ_lindext(current)] = True 
+            elif coord[1] > current[1]: # fill downward
+                for i in range(coord[1]-current[1]):
+                    current = (current[0], current[1]+1) 
+                    occRock[occ_lindext(current)] = True 
+            elif coord[1] < current[1]: # fill upward
+                for i in range(current[1]-coord[1]):
+                    current = (current[0], current[1]-1) 
+                    occRock[occ_lindext(current)] = True 
+            else: # this should only happen if a repeated point is given
+                occRock[occ_lindext(current)] = True
+                
+            assert(current==coord)
+            
+        ipair += 1
+
+f.close()
+    
+
+
+# init display ----------------------------------------------
 board.DISPLAY.show(disp_group[DGROUP_MAIN])
 
 print("INFO: END OF SETUP")
@@ -485,56 +402,11 @@ while True:
 
 
     elif dgroup_show == DGROUP_2022DAY14:
-        if time.monotonic() >= demo_next_step_time and demo_step <= DEMO_MAX_STEP:
-
-            # inc step
-            demo_step += 1
-            update_label_stepval(demo_step)
+        if time.monotonic() >= demo_next_step_time:
+            
+            # move sand # TODO
+            pass
                     
-            # increase energy and update display
-            for ir in range(10):
-                for ic in range(10):
-                    demo_energy[ir][ic] += 1
-                    disp_circles[cir_lindex(ir,ic)].fill = colormap[int(min(demo_energy[ir][ic],10))]
-                    disp_circles[cir_lindex(ir,ic)].outline = colormap[int(min(demo_energy[ir][ic],10))]
-                    if demo_energy[ir][ic] >= 10:
-                        disp_circles[cir_lindex(ir,ic)].outline = 0xFFFF66
-
-            time.sleep(0.1) # not ideal, but want some visual delay
-            
-            # find inital flashers
-            flashers = find_flashers(demo_energy)
-            
-            # propogate flashes and update display
-            new_flashers = copy_set(flashers)
-            while len(new_flashers) > 0:
-                for (ir,ic) in new_flashers:
-                    demo_energy = increment_neighbors(demo_energy,ir,ic) 
-                    disp_circles[cir_lindex(ir,ic)].fill = colormap[10]
-                    disp_circles[cir_lindex(ir,ic)].outline = 0xFFFF66
-                time.sleep(0.1) #  not ideal, but want some visual delay
-                flashers |= new_flashers
-                new_flashers = find_flashers(demo_energy) - flashers 
-                    
-            # reset energy levels of flashers
-            flashed = find_flashers(demo_energy)
-            
-            if len(flashed) == (100):
-                print("INFO: DEMO: ALL FLASHED at step = %d"%(demo_step+1))
-                #break
-            
-            demo_flash_count += len(flashed)
-
-            if len(flashed) > 0:
-                time.sleep(0.1) #  not ideal, but want some visual delay
-
-            for (ir,ic) in flashed:
-                demo_energy[ir][ic] = 0
-                disp_circles[cir_lindex(ir,ic)].fill = colormap[0]
-                disp_circles[cir_lindex(ir,ic)].outline = colormap[0]
-
-            update_label_flashval(demo_flash_count)
-
             # set time for next step increment
             demo_next_step_time = time.monotonic() + demo_step_delay_sec
     else:
