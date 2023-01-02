@@ -41,15 +41,6 @@ from adafruit_display_shapes.circle import Circle
 
 # HELPER FUNCTIONS -----------------------------------------------------------
 
-# convenience function to convert (r,c) coords to linear index for occ{Rock,Sand} array
-def occ_lindex(r,c):
-    global demo_size_width
-    return int( demo_size_width*c + r )
-
-def occ_lindext(coordtuple):
-    global demo_size_width
-    return int( demo_size_width*coordtuple[1] + coordtuple[0] )
-
 # set stars label 
 def update_label_stars(star_count): 
     global label_stars
@@ -57,23 +48,124 @@ def update_label_stars(star_count):
 
 # init demo
 # there's not going to be a lot of error handling here...
-def init_demo():
-    global demo_energy
-    global demo_flash_count
-    global disp_circles
-    global demo_step
+def demo_init():
+    global disp_group 
+    global demo_display_group_init_size
+    global demo_sand_falling
+    global demo_stop
     
     # set global variables to initial values
+    demo_sand_falling = False # cause new sand to be generated
+    demo_stop = False 
+    
+    # erase all sand from demo_occ
+    for i in range(demo_size_width):
+        for j in range(demo_size_height):
+            if demo_occ[i,j] == DEMO_OCC_SAND:
+                demo_occ[i,j] = 0
+    
+    # remove all sand objects (anything drawn after initial init)
+    while len(disp_group[DGROUP_2022DAY14]) > demo_display_group_init_size:
+        disp_group[DGROUP_2022DAY14].pop() 
+        
+    # send out garbage collector 
+    gc.collect()
+    
+# demo-related function: try to move the sand (the one at the end of disp_group[DGROUP_2022DAY14])
+def demo_sand_fall() :
+    global demo_sand_falling 
+    global demo_sand_moved 
+    global demo_stop 
+    global demo_occ
+    
+    fallx = 0 # amount to "fall" in x direction
+    fally = 0 # amount to "fall" in y direction
+    nextdownleftx = 0
+    nextdownlefty = 0
+    nextdownrightx = 0
+    nextdownrighty = 0
+    
+    if demo_falldir == DEMO_FALL_DOWN:
+            fally = 1
+            nextdownleftx = -1
+            nextdownlefty = 1
+            nextdownrightx = 1
+            nextdownrighty = 1
+    elif demo_falldir == DEMO_FALL_UP:
+            fally = -1
+            nextdownleftx = 1
+            nextdownlefty = -1
+            nextdownrightx = -1
+            nextdownrighty = -1
+    elif demo_falldir ==  DEMO_FALL_LEFT:
+            fallx = -1
+            nextdownleftx = -1
+            nextdownlefty = -1
+            nextdownrightx = -1
+            nextdownrighty = 1
+    elif demo_falldir ==  DEMO_FALL_RIGHT:
+            fallx = 1
+            nextdownleftx = 1
+            nextdownlefty = 1
+            nextdownrightx = 1
+            nextdownrighty = -1
+    else:
+        raise ValueError(demo_falldir)
 
+    bHasMoved = False
+    
+    falling_sand = disp_group[DGROUP_2022DAY14][-1]
+    
+    print("DEBUG: trying to move sand at (%d,%d)"%(falling_sand.x,falling_sand.y))
+    
+    # try to move "down"
+    if demo_occ[falling_sand.x+fallx, falling_sand.y+fally] == 0:
+        falling_sand.x += fallx 
+        falling_sand.y += fally 
+        bHasMoved = True 
+    
+    # try to move "down-left"
+    elif demo_occ[falling_sand.x+nextdownleftx, falling_sand.y+nextdownlefty] == 0:
+        falling_sand.x += nextdownleftx 
+        falling_sand.y += nextdownlefty 
+        bHasMoved = True 
+        
+    # try to move "down-right"
+    elif demo_occ[falling_sand.x+nextdownrightx, falling_sand.y+nextdownrightx] == 0:
+        falling_sand.x += nextdownrightx 
+        falling_sand.y += nextdownrighty 
+        bHasMoved = True 
+        
+    if bHasMoved:
+        print("DEBUG: sand moved")
+        demo_sand_moved = True 
+    else:
+        print("DEBUG: sand could not move")
+        
+    # if we move too low, bail out
+    if demo_falldir == DEMO_FALL_DOWN and falling_sand.y > demo_size_height: 
+        print('DEBUG: sand falling off, stopping.')
+        demo_stop = True 
+        return
+    # TODO add other cases to capture falling off other sides
+        
+    # if we haven't moved and haven't bailed out, then mark occupied 
+    if not bHasMoved: 
+        demo_occ[falling_sand.x, falling_sand.y] = DEMO_OCC_SAND
+        demo_sand_falling = False 
+    
+    
+# demo-related function: generate a new sand object
+def demo_generate_sand():
+    global disp_group
+    
+    this_sand = Rect( demo_sand_startpos[0] + demo_hoffset, 
+                      demo_sand_startpos[1] + demo_voffset, 
+                      1, 
+                      1, 
+                      fill = COLOR_SAND )
+    disp_group[DGROUP_2022DAY14].append(this_sand)
 
-# copy set function (should work like copy.deepcopy, but for a set)
-def copy_set(inset):
-    outset = set()
-
-    for e in inset:
-        outset.add(e)
-
-    return outset
 
 # SETUP ----------------------------------------------------------------------
 
@@ -195,7 +287,7 @@ label_firstto50name.anchored_position = (board.DISPLAY.width/2,60)
 disp_group[DGROUP_50STARS].append(label_firstto50name)
 
 # Date
-label_firstto50date = label.Label(font,text="   TBD   ")
+label_firstto50date = label.Label(font,text="         ")
 label_firstto50date.anchor_point = (0.5,0.0) # middle top
 label_firstto50date.anchored_position = (board.DISPLAY.width/2,75)
 disp_group[DGROUP_50STARS].append(label_firstto50date)
@@ -247,11 +339,11 @@ fiftystar_change_time = 0.0
 FIFTYSTAR_FLASHES = const(4)
 
 # demo global vars 
-demo_voffset = const(28)  # offset for start of demo view
 demo_hoffset = const(0)   # offset for start of demo view
+demo_voffset = const(28)  # offset for start of demo view
 
-demo_size_height = int(board.DISPLAY.height-demo_voffset)
 demo_size_width  = int(board.DISPLAY.width-demo_hoffset)
+demo_size_height = int(board.DISPLAY.height-demo_voffset)
 
 # print('DEBUG: size of occ* is (%d,%d)'%(demo_size_width,demo_size_height))
 
@@ -259,12 +351,22 @@ demo_size_width  = int(board.DISPLAY.width-demo_hoffset)
 # this will conserve RAM, because arrays of bools don't work in circuitpython
 # (specifically, you can't index into them properly for some reason)
 demo_occ = np.zeros((demo_size_width,demo_size_height),dtype=np.int8) # bool does not work properly
-ROCK = const(1)
-SAND = const(2)
+DEMO_OCC_ROCK = const(1)
+DEMO_OCC_SAND = const(2)
 
-demo_sand_startpos = (0,int(demo_size_width/2))
+demo_sand_startpos = (int(demo_size_width/2),0)
 
-demo_step_delay_sec = 1.0
+demo_step_delay_sec = 0.100 # 100 ms
+
+demo_sand_falling = False # If True, then sand needs to fall.  If False, then new sand needs to be generated.
+demo_sand_moved = False 
+demo_stop = False # set to True when no more sand can fall
+
+DEMO_FALL_DOWN  = const(1)
+DEMO_FALL_LEFT  = const(2)
+DEMO_FALL_RIGHT = const(3)
+DEMO_FALL_UP    = const(4)
+demo_falldir = DEMO_FALL_DOWN # provision for accelerometer direction reading
 
 
 # one-time setup for demo screen ----------------------------
@@ -309,7 +411,7 @@ for line in f.readlines():
         # fill in demo_occ and draw rocks as rectangles
         if ipair == 0:
             current = tuple(coord) 
-            demo_occ[current] = ROCK 
+            demo_occ[current] = DEMO_OCC_ROCK 
         else: 
             if coord[0] > current[0]: # fill towards right
                 # draw rect
@@ -322,7 +424,7 @@ for line in f.readlines():
                 # fill in demo_occ 
                 for i in range(coord[0]-current[0]):
                     current = (current[0]+1, current[1]) 
-                    demo_occ[current] = ROCK 
+                    demo_occ[current] = DEMO_OCC_ROCK 
             elif coord[0] < current[0]: # fill towards left
                 # draw rect
                 this_rect = Rect( coord[0] + demo_hoffset, 
@@ -334,7 +436,7 @@ for line in f.readlines():
                 # fill in demo_occ 
                 for i in range(current[0]-coord[0]):
                     current = (current[0]-1, current[1]) 
-                    demo_occ[current] = ROCK 
+                    demo_occ[current] = DEMO_OCC_ROCK 
             elif coord[1] > current[1]: # fill downward
                 # draw rect
                 this_rect = Rect( current[0] + demo_hoffset, 
@@ -346,7 +448,7 @@ for line in f.readlines():
                 # fill in demo_occ 
                 for i in range(coord[1]-current[1]):
                     current = (current[0], current[1]+1) 
-                    demo_occ[current] = ROCK 
+                    demo_occ[current] = DEMO_OCC_ROCK 
             elif coord[1] < current[1]: # fill upward
                 # draw rect
                 this_rect = Rect( current[0] + demo_hoffset, 
@@ -358,7 +460,7 @@ for line in f.readlines():
                 # fill in demo_occ 
                 for i in range(current[1]-coord[1]):
                     current = (current[0], current[1]-1) 
-                    demo_occ[current] = ROCK 
+                    demo_occ[current] = DEMO_OCC_ROCK 
             else: # this should only happen if a repeated point is given
                 # draw rect
                 this_rect = Rect( current[0] + demo_hoffset, 
@@ -368,7 +470,7 @@ for line in f.readlines():
                                   fill = COLOR_ROCK )
                 disp_group[DGROUP_2022DAY14].append(this_rect)
                 # fill in demo_occ 
-                demo_occ[current] = ROCK 
+                demo_occ[current] = DEMO_OCC_ROCK 
                 
             # print("DEBUG: coord   = (%d,%d)"%(coord[0],coord[1]))
             # print("DEBUG: current = (%d,%d)"%(current[0],current[1]))
@@ -377,6 +479,8 @@ for line in f.readlines():
         ipair += 1
 
 f.close()
+
+demo_display_group_init_size = len(disp_group[DGROUP_2022DAY14])
     
 # report free memory ----------------------------------------
 print("INFO: Free memory = %d bytes"%gc.mem_free())
@@ -452,11 +556,19 @@ while True:
 
 
     elif dgroup_show == DGROUP_2022DAY14:
-        if time.monotonic() >= demo_next_step_time:
+        if not demo_stop and time.monotonic() >= demo_next_step_time:
             
-            # move sand # TODO
-            pass
-                    
+            # do sand stuff
+            if demo_sand_falling: 
+                demo_sand_fall() 
+            # elif not demo_sand_falling and not demo_sand_moved: # full up
+            #     print('DEBUG: detected full sand condition')
+            #     demo_stop = True 
+            else:
+                demo_generate_sand() 
+                demo_sand_moved = False
+                demo_sand_falling = True 
+            
             # set time for next step increment
             demo_next_step_time = time.monotonic() + demo_step_delay_sec
     else:
@@ -489,8 +601,8 @@ while True:
 
         elif dgroup_show == DGROUP_2022DAY14:
             print("INFO: transitioning to DEMO screen")
-            init_demo()
-            demo_next_step_time = time.monotonic() + 2.0*demo_step_delay_sec# TODO update
+            demo_init()
+            demo_next_step_time = time.monotonic() + 2.0*demo_step_delay_sec 
 
         else:
             print("ERROR: undefined state transition: %d"%dgroup_show)
