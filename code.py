@@ -257,7 +257,7 @@ print('DEBUG: size of occ* is (%d,%d)'%(demo_size_height,demo_size_width))
 # change to occupied array, and record ROCK or SAND
 # this will conserve RAM, because arrays of bools don't work in circuitpython
 # (specifically, you can't index into them properly for some reason)
-demo_occ = np.zeros((demo_size_height,demo_size_width),dtype=np.int8) # bool does not work properly
+demo_occ = np.zeros((demo_size_width,demo_size_height),dtype=np.int8) # bool does not work properly
 ROCK = const(1)
 SAND = const(2)
 
@@ -301,7 +301,7 @@ for line in f.readlines():
         # parse coordinates
         coord = [0,0]
         for (iscm,scm) in enumerate(regex_comma.split(s)):
-            coord[iscm] = int(scm)
+            coord[iscm] = int(scm) 
             
         # print("DEBUG: coord parsed is (%d,%d)"%(coord[0],coord[1]))
             
