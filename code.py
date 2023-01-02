@@ -22,6 +22,7 @@ COLOR_SAND   = COLOR_YELLOW
 # IMPORTS --------------------------------------------------------------------
 import board
 import displayio
+import gc
 import keypad 
 from math import floor
 import neopixel
@@ -252,7 +253,7 @@ demo_hoffset = const(0)   # offset for start of demo view
 demo_size_height = int(board.DISPLAY.height-demo_voffset)
 demo_size_width  = int(board.DISPLAY.width-demo_hoffset)
 
-print('DEBUG: size of occ* is (%d,%d)'%(demo_size_height,demo_size_width))
+# print('DEBUG: size of occ* is (%d,%d)'%(demo_size_width,demo_size_height))
 
 # change to occupied array, and record ROCK or SAND
 # this will conserve RAM, because arrays of bools don't work in circuitpython
@@ -272,10 +273,10 @@ demo_step_delay_sec = 1.0
 # read input file or use default input
 try:
     f = open("aoc2022_day14_init.txt")
-    print("reading init file")
+    print("INFO: reading init file")
 except:
     f = open("aoc2022_day14_ex.txt")
-    print("using default init") 
+    print("INFO: using default init") 
     
 
 regex_space = re.compile(" ")
@@ -377,7 +378,8 @@ for line in f.readlines():
 
 f.close()
     
-
+# report free memory ----------------------------------------
+print("INFO: Free memory = %d bytes"%gc.mem_free())
 
 # init display ----------------------------------------------
 board.DISPLAY.show(disp_group[DGROUP_MAIN])
