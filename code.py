@@ -286,7 +286,7 @@ for line in f.readlines():
     if len(line) <= 1:
         next 
         
-    print("DEBUG: processing line: %s"%line)
+    # print("DEBUG: processing line: %s"%line)
         
     # add rocks
     ipair = 0
