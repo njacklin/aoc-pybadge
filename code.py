@@ -6,7 +6,7 @@
 
 USE_NEOPIXELS = False # set to True or False... one board is defective :-(
 
-MAX_CHAR = 20 # max number of text chars that can fit, based on observation
+MAX_CHAR = const(20) # max number of text chars that can fit, based on observation
 
 COLOR_AOCGREEN  = 0x009900 # from AoC website stylesheet
 COLOR_AOCYELLOW = 0xFFFF66 # from AoC website stylesheet
@@ -15,6 +15,8 @@ COLOR_WHITE  = 0xFFFFFF
 COLOR_BLACK  = 0x000000
 COLOR_GRAY   = 0x888888
 COLOR_YELLOW = 0xFFFF00
+
+DEMO_ZOOM_FACTOR = const(4) # runs out of RAM if < 4
 
 COLOR_ROCK   = COLOR_GRAY
 COLOR_SAND   = COLOR_YELLOW
@@ -54,9 +56,6 @@ def demo_init():
     global demo_sand_falling
     global demo_stop
     
-    # set global variables to initial values
-    demo_sand_falling = False # cause new sand to be generated
-    demo_stop = False 
     
     # erase all sand from demo_occ
     for i in range(demo_size_width):
@@ -70,6 +69,13 @@ def demo_init():
         
     # send out garbage collector 
     gc.collect()
+    
+    # set global variables to initial values
+    demo_sand_falling = True 
+    demo_stop = False 
+    
+    # generate first sand
+    demo_generate_sand()
     
 # demo-related function: try to move the sand (the one at the end of disp_group[DGROUP_2022DAY14])
 def demo_sand_fall() :
@@ -116,34 +122,39 @@ def demo_sand_fall() :
     
     falling_sand = disp_group[DGROUP_2022DAY14][-1]
     
-    print("DEBUG: trying to move sand at (%d,%d)"%(falling_sand.x,falling_sand.y))
+    # compute effective coordinates in demo_occ 
+    sand_x_mapped = int(falling_sand.x/DEMO_ZOOM_FACTOR)
+    sand_y_mapped = int((falling_sand.y-demo_voffset)/DEMO_ZOOM_FACTOR)
+    
+    # print("DEBUG: trying to move sand at (%d,%d)"%(sand_x_mapped,sand_y_mapped))
     
     # try to move "down"
-    if demo_occ[falling_sand.x+fallx, falling_sand.y+fally] == 0:
-        falling_sand.x += fallx 
-        falling_sand.y += fally 
+    if demo_occ[sand_x_mapped+fallx, sand_y_mapped+fally] == 0:
+        falling_sand.x += fallx*DEMO_ZOOM_FACTOR
+        falling_sand.y += fally*DEMO_ZOOM_FACTOR
         bHasMoved = True 
     
     # try to move "down-left"
-    elif demo_occ[falling_sand.x+nextdownleftx, falling_sand.y+nextdownlefty] == 0:
-        falling_sand.x += nextdownleftx 
-        falling_sand.y += nextdownlefty 
+    elif demo_occ[sand_x_mapped+nextdownleftx, sand_y_mapped+nextdownlefty] == 0:
+        falling_sand.x += nextdownleftx*DEMO_ZOOM_FACTOR 
+        falling_sand.y += nextdownlefty*DEMO_ZOOM_FACTOR 
         bHasMoved = True 
         
     # try to move "down-right"
-    elif demo_occ[falling_sand.x+nextdownrightx, falling_sand.y+nextdownrightx] == 0:
-        falling_sand.x += nextdownrightx 
-        falling_sand.y += nextdownrighty 
+    elif demo_occ[sand_x_mapped+nextdownrightx, sand_y_mapped+nextdownrightx] == 0:
+        falling_sand.x += nextdownrightx*DEMO_ZOOM_FACTOR 
+        falling_sand.y += nextdownrighty*DEMO_ZOOM_FACTOR 
         bHasMoved = True 
         
     if bHasMoved:
-        print("DEBUG: sand moved")
+        # print("DEBUG: sand moved")
         demo_sand_moved = True 
     else:
-        print("DEBUG: sand could not move")
+        # print("DEBUG: sand could not move")
+        pass
         
     # if we move too low, bail out
-    if demo_falldir == DEMO_FALL_DOWN and falling_sand.y > demo_size_height: 
+    if demo_falldir == DEMO_FALL_DOWN and int((falling_sand.y-demo_voffset)/DEMO_ZOOM_FACTOR) > demo_size_height: 
         print('DEBUG: sand falling off, stopping.')
         demo_stop = True 
         return
@@ -151,7 +162,7 @@ def demo_sand_fall() :
         
     # if we haven't moved and haven't bailed out, then mark occupied 
     if not bHasMoved: 
-        demo_occ[falling_sand.x, falling_sand.y] = DEMO_OCC_SAND
+        demo_occ[sand_x_mapped, sand_y_mapped] = DEMO_OCC_SAND
         demo_sand_falling = False 
     
     
@@ -159,12 +170,14 @@ def demo_sand_fall() :
 def demo_generate_sand():
     global disp_group
     
-    this_sand = Rect( demo_sand_startpos[0] + demo_hoffset, 
-                      demo_sand_startpos[1] + demo_voffset, 
-                      1, 
-                      1, 
+    this_sand = Rect( demo_sand_startpos[0]*DEMO_ZOOM_FACTOR, 
+                      demo_sand_startpos[1]*DEMO_ZOOM_FACTOR + demo_voffset, 
+                      DEMO_ZOOM_FACTOR, 
+                      DEMO_ZOOM_FACTOR, 
                       fill = COLOR_SAND )
     disp_group[DGROUP_2022DAY14].append(this_sand)
+    
+    print("DEBUG: New sand. Free memory = %d bytes."%gc.mem_free())
 
 
 # SETUP ----------------------------------------------------------------------
@@ -315,13 +328,13 @@ label_aoc.anchored_position = (0,0)
 disp_group[DGROUP_2022DAY14].append(label_aoc)
 
 # neopixel init ------------------------------------------
-if USE_NEOPIXELS:
-    pin_neopixel = board.NEOPIXEL
-    num_neopixel = 5
-    neopixels = neopixel.NeoPixel(pin_neopixel, num_neopixel, pixel_order=neopixel.GRB,
-                                brightness=0.01, auto_write=False)
-    neopixels.fill(COLOR_BLACK) # turn off
-    neopixels.show()
+# if USE_NEOPIXELS: # always init... just never turn on if not using
+pin_neopixel = board.NEOPIXEL
+num_neopixel = 5
+neopixels = neopixel.NeoPixel(pin_neopixel, num_neopixel, pixel_order=neopixel.GRB,
+                            brightness=0.01, auto_write=False)
+neopixels.fill(COLOR_BLACK) # turn off
+neopixels.show()
 
 # establish global variables for all states ---------------
 
@@ -339,11 +352,10 @@ fiftystar_change_time = 0.0
 FIFTYSTAR_FLASHES = const(4)
 
 # demo global vars 
-demo_hoffset = const(0)   # offset for start of demo view
 demo_voffset = const(28)  # offset for start of demo view
 
-demo_size_width  = int(board.DISPLAY.width-demo_hoffset)
-demo_size_height = int(board.DISPLAY.height-demo_voffset)
+demo_size_width  = int(board.DISPLAY.width / DEMO_ZOOM_FACTOR)
+demo_size_height = int((board.DISPLAY.height-demo_voffset)/DEMO_ZOOM_FACTOR)
 
 # print('DEBUG: size of occ* is (%d,%d)'%(demo_size_width,demo_size_height))
 
@@ -356,7 +368,7 @@ DEMO_OCC_SAND = const(2)
 
 demo_sand_startpos = (int(demo_size_width/2),0)
 
-demo_step_delay_sec = 0.100 # 100 ms
+demo_step_delay_sec = 0.100 # 100 ms (0.100) looks good, but is slow for debug
 
 demo_sand_falling = False # If True, then sand needs to fall.  If False, then new sand needs to be generated.
 demo_sand_moved = False 
@@ -415,10 +427,10 @@ for line in f.readlines():
         else: 
             if coord[0] > current[0]: # fill towards right
                 # draw rect
-                this_rect = Rect( current[0] + demo_hoffset, 
-                                  current[1] + demo_voffset, 
-                                  coord[0] - current[0] + 1, 
-                                  1, 
+                this_rect = Rect( current[0]*DEMO_ZOOM_FACTOR, 
+                                  current[1]*DEMO_ZOOM_FACTOR + demo_voffset, 
+                                  (coord[0] - current[0] + 1)*DEMO_ZOOM_FACTOR, 
+                                  DEMO_ZOOM_FACTOR, 
                                   fill = COLOR_ROCK )
                 disp_group[DGROUP_2022DAY14].append(this_rect)
                 # fill in demo_occ 
@@ -427,10 +439,10 @@ for line in f.readlines():
                     demo_occ[current] = DEMO_OCC_ROCK 
             elif coord[0] < current[0]: # fill towards left
                 # draw rect
-                this_rect = Rect( coord[0] + demo_hoffset, 
-                                  current[1] + demo_voffset, 
-                                  current[0] - coord[0] + 1, 
-                                  1, 
+                this_rect = Rect( coord[0]*DEMO_ZOOM_FACTOR, 
+                                  current[1]*DEMO_ZOOM_FACTOR + demo_voffset, 
+                                  (current[0] - coord[0] + 1)*DEMO_ZOOM_FACTOR, 
+                                  DEMO_ZOOM_FACTOR, 
                                   fill = COLOR_ROCK )
                 disp_group[DGROUP_2022DAY14].append(this_rect)
                 # fill in demo_occ 
@@ -439,10 +451,10 @@ for line in f.readlines():
                     demo_occ[current] = DEMO_OCC_ROCK 
             elif coord[1] > current[1]: # fill downward
                 # draw rect
-                this_rect = Rect( current[0] + demo_hoffset, 
-                                  current[1] + demo_voffset, 
-                                  1, 
-                                  coord[1] - current[1] + 1, 
+                this_rect = Rect( current[0]*DEMO_ZOOM_FACTOR, 
+                                  current[1]*DEMO_ZOOM_FACTOR + demo_voffset, 
+                                  DEMO_ZOOM_FACTOR, 
+                                  (coord[1] - current[1] + 1)*DEMO_ZOOM_FACTOR, 
                                   fill = COLOR_ROCK )
                 disp_group[DGROUP_2022DAY14].append(this_rect)
                 # fill in demo_occ 
@@ -451,10 +463,10 @@ for line in f.readlines():
                     demo_occ[current] = DEMO_OCC_ROCK 
             elif coord[1] < current[1]: # fill upward
                 # draw rect
-                this_rect = Rect( current[0] + demo_hoffset, 
-                                  coord[1] + demo_voffset, 
-                                  1, 
-                                  current[1] - coord[1] + 1, 
+                this_rect = Rect( current[0]*DEMO_ZOOM_FACTOR, 
+                                  coord[1]*DEMO_ZOOM_FACTOR + demo_voffset, 
+                                  DEMO_ZOOM_FACTOR, 
+                                  (current[1] - coord[1] + 1)*DEMO_ZOOM_FACTOR, 
                                   fill = COLOR_ROCK )
                 disp_group[DGROUP_2022DAY14].append(this_rect)
                 # fill in demo_occ 
@@ -463,10 +475,10 @@ for line in f.readlines():
                     demo_occ[current] = DEMO_OCC_ROCK 
             else: # this should only happen if a repeated point is given
                 # draw rect
-                this_rect = Rect( current[0] + demo_hoffset, 
-                                  current[1] + demo_voffset, 
-                                  1, 
-                                  1, 
+                this_rect = Rect( current[0]*DEMO_ZOOM_FACTOR, 
+                                  current[1]*DEMO_ZOOM_FACTOR + demo_voffset, 
+                                  DEMO_ZOOM_FACTOR, 
+                                  DEMO_ZOOM_FACTOR, 
                                   fill = COLOR_ROCK )
                 disp_group[DGROUP_2022DAY14].append(this_rect)
                 # fill in demo_occ 
@@ -483,7 +495,7 @@ f.close()
 demo_display_group_init_size = len(disp_group[DGROUP_2022DAY14])
     
 # report free memory ----------------------------------------
-print("INFO: Free memory = %d bytes"%gc.mem_free())
+print("INFO: Free memory = %d bytes."%gc.mem_free())
 
 # init display ----------------------------------------------
 board.DISPLAY.show(disp_group[DGROUP_MAIN])
@@ -561,9 +573,9 @@ while True:
             # do sand stuff
             if demo_sand_falling: 
                 demo_sand_fall() 
-            # elif not demo_sand_falling and not demo_sand_moved: # full up
-            #     print('DEBUG: detected full sand condition')
-            #     demo_stop = True 
+            elif not demo_sand_falling and not demo_sand_moved: # full up
+                print('DEBUG: detected full sand condition')
+                demo_stop = True 
             else:
                 demo_generate_sand() 
                 demo_sand_moved = False
