@@ -6,6 +6,8 @@
 
 USE_NEOPIXELS = True # set to True or False... one board is defective :-(
 
+USE_ACCEL = True # set to True or False... PyBadge LC does not have device.
+
 MAX_CHAR = const(20) # max number of text chars that can fit, based on observation
 
 COLOR_AOCGREEN  = 0x009900 # from AoC website stylesheet
@@ -286,8 +288,9 @@ keys = keypad.ShiftRegisterKeys(
 # read by pulling (x,y,z) = accel.acceleration
 # normalize by dividing by adafruit_lis3dh.STANDARD_GRAVITY
 # to check for shaking, use "accel.shake(shake_threshold=30)" (lower = easier to detect, try 15-60)
-accel = adafruit_lis3dh.LIS3DH_I2C(board.I2C(), int1=digitalio.DigitalInOut(board.ACCELEROMETER_INTERRUPT))
-accel.range = adafruit_lis3dh.RANGE_2_G
+if USE_ACCEL: 
+    accel = adafruit_lis3dh.LIS3DH_I2C(board.I2C(), int1=digitalio.DigitalInOut(board.ACCELEROMETER_INTERRUPT))
+    accel.range = adafruit_lis3dh.RANGE_2_G
 
 # print('DEBUG: initial accelerometer reading (normalized): ')
 # (a_x,a_y,a_z) = accel.acceleration 
@@ -645,8 +648,9 @@ while True:
     elif dgroup_show == DGROUP_2022DAY14:
         if time.monotonic() >= demo_next_step_time:
             
-            # check rotation
-            demo_check_rotation()
+            if USE_ACCEL: 
+                # check rotation
+                demo_check_rotation()
             
             if not demo_stop: 
                 
