@@ -40,6 +40,11 @@ from adafruit_bitmap_font import bitmap_font
 from adafruit_display_text import label
 from adafruit_display_shapes.rect import Rect
 from adafruit_display_shapes.circle import Circle
+import adafruit_lis3dh # accelerometer library, see 
+   # https://learn.adafruit.com/adafruit-lis3dh-triple-axis-accelerometer-breakout/python-circuitpython
+   # from experimentation, as you look at the board, +x is to the right, 
+   # +y is down, and -z is into the board (+z is out of the board towards viewer)
+import digitalio # needed for accelerometer
 
 # HELPER FUNCTIONS -----------------------------------------------------------
 
@@ -76,6 +81,49 @@ def demo_init():
     
     # generate first sand
     demo_generate_sand()
+    
+# demo-related function: check for rotation
+#   this isn't going to shift all existing sand (right now, anyway), 
+#   but it will change demo_falldir and reset demo_sand_falling
+def demo_check_rotation():
+    global demo_falldir 
+    global demo_sand_falling 
+    global demo_stop 
+    
+    init_demo_falldir = demo_falldir 
+    
+    # read accelerometer
+    (a_x,a_y,a_z) = accel.acceleration 
+    
+    # print('DEBUG: check_rotation a_x = %0.2f, a_y = %0.2f, a_z = %0.2f'%(a_x,a_y,a_z))
+    
+    if a_y > 0 and abs(a_y) > abs(a_x): 
+        demo_falldir = DEMO_FALL_DOWN
+    elif a_y < 0 and abs(a_y) > abs(a_x): 
+        demo_falldir = DEMO_FALL_UP
+    elif a_x > 0 and abs(a_x) > abs(a_y):
+        demo_falldir = DEMO_FALL_RIGHT
+    elif a_x < 0 and abs(a_x) > abs(a_y):
+        demo_falldir = DEMO_FALL_LEFT
+    else:
+        demo_falldir = DEMO_FALL_DOWN
+        print('WARN: could not detect direction, so setting demo_falldir = DEMO_FALL_DOWN')
+        
+    if init_demo_falldir != demo_falldir:
+        if demo_falldir == DEMO_FALL_DOWN:
+            print('INFO: changing rotation direction to DOWN')
+        elif demo_falldir == DEMO_FALL_UP:
+            print('INFO: changing rotation direction to UP')
+        elif demo_falldir == DEMO_FALL_RIGHT:
+            print('INFO: changing rotation direction to RIGHT')
+        elif demo_falldir == DEMO_FALL_LEFT:
+            print('INFO: changing rotation direction to LEFT')
+        
+    # reset sand falling  
+    if init_demo_falldir != demo_falldir and not demo_sand_falling:
+        demo_stop = False 
+        demo_sand_falling = True 
+        demo_generate_sand()
     
 # demo-related function: try to move the sand (the one at the end of disp_group[DGROUP_2022DAY14])
 def demo_sand_fall() :
@@ -129,23 +177,26 @@ def demo_sand_fall() :
     # print("DEBUG: trying to move sand at (%d,%d)"%(sand_x_mapped,sand_y_mapped))
     
     # try to move "down"
-    if demo_occ[sand_x_mapped+fallx, sand_y_mapped+fally] == 0:
-        falling_sand.x += fallx*DEMO_ZOOM_FACTOR
-        falling_sand.y += fally*DEMO_ZOOM_FACTOR
-        bHasMoved = True 
+    try: # sometimes breaks during rotation
+        if demo_occ[sand_x_mapped+fallx, sand_y_mapped+fally] == 0:
+            falling_sand.x += fallx*DEMO_ZOOM_FACTOR
+            falling_sand.y += fally*DEMO_ZOOM_FACTOR
+            bHasMoved = True 
+        
+        # try to move "down-left"
+        elif demo_occ[sand_x_mapped+nextdownleftx, sand_y_mapped+nextdownlefty] == 0:
+            falling_sand.x += nextdownleftx*DEMO_ZOOM_FACTOR 
+            falling_sand.y += nextdownlefty*DEMO_ZOOM_FACTOR 
+            bHasMoved = True 
+            
+        # try to move "down-right"
+        elif demo_occ[sand_x_mapped+nextdownrightx, sand_y_mapped+nextdownrightx] == 0:
+            falling_sand.x += nextdownrightx*DEMO_ZOOM_FACTOR 
+            falling_sand.y += nextdownrighty*DEMO_ZOOM_FACTOR 
+            bHasMoved = True 
+    except: 
+        pass 
     
-    # try to move "down-left"
-    elif demo_occ[sand_x_mapped+nextdownleftx, sand_y_mapped+nextdownlefty] == 0:
-        falling_sand.x += nextdownleftx*DEMO_ZOOM_FACTOR 
-        falling_sand.y += nextdownlefty*DEMO_ZOOM_FACTOR 
-        bHasMoved = True 
-        
-    # try to move "down-right"
-    elif demo_occ[sand_x_mapped+nextdownrightx, sand_y_mapped+nextdownrightx] == 0:
-        falling_sand.x += nextdownrightx*DEMO_ZOOM_FACTOR 
-        falling_sand.y += nextdownrighty*DEMO_ZOOM_FACTOR 
-        bHasMoved = True 
-        
     if bHasMoved:
         # print("DEBUG: sand moved")
         demo_sand_moved = True 
@@ -161,14 +212,26 @@ def demo_sand_fall() :
     # TODO add other cases to capture falling off other sides
         
     # if we haven't moved and haven't bailed out, then mark occupied 
-    if not bHasMoved: 
-        demo_occ[sand_x_mapped, sand_y_mapped] = DEMO_OCC_SAND
-        demo_sand_falling = False 
+    try: 
+        if not bHasMoved: 
+            demo_occ[sand_x_mapped, sand_y_mapped] = DEMO_OCC_SAND
+            demo_sand_falling = False 
+    except: 
+        pass 
     
     
 # demo-related function: generate a new sand object
 def demo_generate_sand():
     global disp_group
+    
+    if demo_falldir == DEMO_FALL_DOWN:
+        demo_sand_startpos = (int(demo_size_width/2),0)
+    elif demo_falldir == DEMO_FALL_LEFT:
+        demo_sand_startpos = (demo_size_width-1,int(demo_size_height/2))
+    elif demo_falldir == DEMO_FALL_RIGHT:
+        demo_sand_startpos = (0,int(demo_size_height/2))
+    elif demo_falldir == DEMO_FALL_UP:
+        demo_sand_startpos = (int(demo_size_width/2),demo_size_height-1)
     
     this_sand = Rect( demo_sand_startpos[0]*DEMO_ZOOM_FACTOR, 
                       demo_sand_startpos[1]*DEMO_ZOOM_FACTOR + demo_voffset, 
@@ -177,6 +240,7 @@ def demo_generate_sand():
                       fill = COLOR_SAND )
     disp_group[DGROUP_2022DAY14].append(this_sand)
     
+    gc.collect()
     print("DEBUG: New sand. Free memory = %d bytes."%gc.mem_free())
 
 
@@ -217,6 +281,18 @@ keys = keypad.ShiftRegisterKeys(
     key_count=8,
     value_when_pressed=True,
 )
+
+# accelerometer setup ------------------------------------
+# read by pulling (x,y,z) = accel.acceleration
+# normalize by dividing by adafruit_lis3dh.STANDARD_GRAVITY
+# to check for shaking, use "accel.shake(shake_threshold=30)" (lower = easier to detect, try 15-60)
+accel = adafruit_lis3dh.LIS3DH_I2C(board.I2C(), int1=digitalio.DigitalInOut(board.ACCELEROMETER_INTERRUPT))
+accel.range = adafruit_lis3dh.RANGE_2_G
+
+# print('DEBUG: initial accelerometer reading (normalized): ')
+# (a_x,a_y,a_z) = accel.acceleration 
+# print('       a_x = %0.2f g, a_y = %0.2f g, a_z = %0.2f g'%
+#       (a_x/adafruit_lis3dh.STANDARD_GRAVITY,a_y/adafruit_lis3dh.STANDARD_GRAVITY,a_z/adafruit_lis3dh.STANDARD_GRAVITY))
 
 # build disp_group[DGROUP_MAIN] --------------------------
 
@@ -366,13 +442,12 @@ demo_occ = np.zeros((demo_size_width,demo_size_height),dtype=np.int8) # bool doe
 DEMO_OCC_ROCK = const(1)
 DEMO_OCC_SAND = const(2)
 
-demo_sand_startpos = (int(demo_size_width/2),0)
-
 demo_step_delay_sec = 0.100 # 100 ms (0.100) looks good, but is slow for debug
 
 demo_sand_falling = False # If True, then sand needs to fall.  If False, then new sand needs to be generated.
 demo_sand_moved = False 
 demo_stop = False # set to True when no more sand can fall
+demo_process_rotate = False 
 
 DEMO_FALL_DOWN  = const(1)
 DEMO_FALL_LEFT  = const(2)
@@ -568,18 +643,23 @@ while True:
 
 
     elif dgroup_show == DGROUP_2022DAY14:
-        if not demo_stop and time.monotonic() >= demo_next_step_time:
+        if time.monotonic() >= demo_next_step_time:
             
-            # do sand stuff
-            if demo_sand_falling: 
-                demo_sand_fall() 
-            elif not demo_sand_falling and not demo_sand_moved: # full up
-                print('DEBUG: detected full sand condition')
-                demo_stop = True 
-            else:
-                demo_generate_sand() 
-                demo_sand_moved = False
-                demo_sand_falling = True 
+            # check rotation
+            demo_check_rotation()
+            
+            if not demo_stop: 
+                
+                # do sand stuff
+                if demo_sand_falling: 
+                    demo_sand_fall() 
+                elif not demo_sand_falling and not demo_sand_moved: # full up
+                    print('DEBUG: detected full sand condition')
+                    demo_stop = True 
+                else:
+                    demo_generate_sand() 
+                    demo_sand_moved = False
+                    demo_sand_falling = True 
             
             # set time for next step increment
             demo_next_step_time = time.monotonic() + demo_step_delay_sec
