@@ -423,8 +423,7 @@ disp_group[DGROUP_50STARS].append(label_stars)
 # disp_group[DGROUP_2023DAY14].append(bg)
 
 # AOC label at top
-# label_aoc = label.Label(font, text="Advent of Code\n   int y=2021;", color=0x009900)
-label_aoc = label.Label(font, text="AoC 2021      Day 11", color=COLOR_AOCGREEN)
+label_aoc = label.Label(font, text="AoC 2023      Day 14", color=COLOR_AOCGREEN)
 label_aoc.anchor_point = (0.0,0.0) # left top
 label_aoc.anchored_position = (0,0)
 disp_group[DGROUP_2023DAY14].append(label_aoc)
