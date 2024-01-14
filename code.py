@@ -361,7 +361,7 @@ disp_group[DGROUP_MAIN].append(label_more)
 # disp_group[DGROUP_50STARS].append(bg)
 
 # AOC label at top
-label_aoc = label.Label(font, text="Advent of Code\n   int y=2022;", color=COLOR_AOCGREEN)
+label_aoc = label.Label(font, text="Advent of Code\n   YEAR: 2022", color=COLOR_AOCGREEN)
 label_aoc.anchor_point = (0.0,0.0) # left top
 label_aoc.anchored_position = (0,0)
 disp_group[DGROUP_50STARS].append(label_aoc)
@@ -373,13 +373,13 @@ label_firstto50.anchored_position = (board.DISPLAY.width/2,45)
 disp_group[DGROUP_50STARS].append(label_firstto50)
 
 # Name
-label_firstto50name = label.Label(font,text="~ UNCLAIMED ~")
+label_firstto50name = label.Label(font,text="Dave Buscaglia", color=COLOR_AOCYELLOW)
 label_firstto50name.anchor_point = (0.5,0.0) # middle top
 label_firstto50name.anchored_position = (board.DISPLAY.width/2,60)
 disp_group[DGROUP_50STARS].append(label_firstto50name)
 
 # Date
-label_firstto50date = label.Label(font,text="         ")
+label_firstto50date = label.Label(font,text="Jan 23 2023 23:03:41")
 label_firstto50date.anchor_point = (0.5,0.0) # middle top
 label_firstto50date.anchored_position = (board.DISPLAY.width/2,75)
 disp_group[DGROUP_50STARS].append(label_firstto50date)
