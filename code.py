@@ -1,6 +1,8 @@
 # Advent of Code "Trophy"
 # 2023 Edition
 # Demo of Day 14 (rocks falling) for visualization
+#   initialized from aoc2023_day14_init.txt, backup aoc2023_day14_ex.txt
+#   note, must be a 10x10 grid of "O" for rocks, "#" for immovable cubes, or "." for empty
 
 # PARAMETERS AND CONSTANTS ----------------------------------------------------
 
@@ -16,8 +18,9 @@ COLOR_AOCBGBLUE = 0x0F0F23 # from AoC website stylesheet (background) -- not use
 COLOR_WHITE  = 0xFFFFFF
 COLOR_BLACK  = 0x000000
 COLOR_GRAY   = 0x888888
+COLOR_LTGRAY = 0xAAAAAA
 COLOR_YELLOW = 0xFFFF00
-COLOR_BROWN  = 0xA52A2A
+COLOR_BROWN  = 0xCD7F32
 
 COLOR_ROCK   = COLOR_GRAY
 COLOR_CUBE   = COLOR_BROWN
@@ -56,25 +59,77 @@ def update_label_stars(star_count):
 
 # init demo
 # there's not going to be a lot of error handling here...
-def demo_init(): # TODO going to need a lot of updates
+def demo_init(): 
     global disp_group 
+    global demo_disp_circles
     global demo_display_group_init_size
+    global demo_map 
     global demo_rocks_falling
     global demo_stop
+
+    cir_radius = const(4)
+    cir_start_x = const(57)
+    cir_start_y = const(25) 
     
-    # remove all sand objects (anything drawn after initial init)
+    # set global variables to initial values
+    demo_rocks_falling = True 
+    demo_stop = False 
+
+    demo_disp_circles = list()
+
+    # remove all rock and cube objects (anything drawn after initial init)
     while len(disp_group[DGROUP_2023DAY14]) > demo_display_group_init_size:
         disp_group[DGROUP_2023DAY14].pop() 
         
     # send out garbage collector 
     gc.collect()
+
+    # read input file or use default input
+    try:
+        f = open("aoc2023_day14_init.txt")
+        print("INFO: reading init file")
+    except:
+        f = open("aoc2023_day14_ex.txt")
+        print("INFO: using default init") 
+        
+    # fill in map and draw objects
+    irow = 0
+    for line in f.readlines():
+        if len(line) < 2:
+            continue 
+        
+        for (icol,c) in enumerate(line.strip()):
+            if c == '.':
+                demo_map[irow,icol] = DEMO_V_EMPTY
+
+            elif c == 'O':
+                demo_map[irow,icol] = DEMO_V_ROCK 
+
+                demo_disp_circles.append( Circle( cir_start_x+cir_radius+1+(2*cir_radius+2)*irow,
+                                                cir_start_y+cir_radius+1+(2*cir_radius+2)*icol, 
+                                                cir_radius,
+                                                fill=COLOR_GRAY, 
+                                                stroke=1,
+                                                outline=COLOR_LTGRAY) )
+                
+                disp_group[DGROUP_2023DAY14].append(demo_disp_circles[-1])
+
+            elif c == '#':
+                demo_map[irow,icol] = DEMO_V_CUBE 
+
+                disp_group[DGROUP_2023DAY14].append( Rect( cir_start_x+(2*cir_radius+2)*irow,
+                                                           cir_start_y+(2*cir_radius+2)*icol, 
+                                                           2*cir_radius+2, # height
+                                                           2*cir_radius+2, # width
+                                                           fill=COLOR_BROWN ) )
+
+            else:
+                raise Exception("Unrecognized symbol: %s"%c)
+                
+        irow += 1
+
+    f.close()
     
-    # set global variables to initial values
-    demo_sand_falling = True 
-    demo_stop = False 
-    
-    # generate first sand
-    demo_generate_sand()
     
 # demo-related function: check for rotation
 #   this isn't going to shift all existing sand (right now, anyway), 
@@ -213,30 +268,6 @@ def demo_sand_fall() :
     except: 
         pass 
     
-    
-# demo-related function: generate a new sand object
-def demo_generate_sand():
-    global disp_group
-    
-    if demo_falldir == DEMO_FALL_DOWN:
-        demo_sand_startpos = (int(demo_size_width/2),0)
-    elif demo_falldir == DEMO_FALL_LEFT:
-        demo_sand_startpos = (demo_size_width-1,int(demo_size_height/2))
-    elif demo_falldir == DEMO_FALL_RIGHT:
-        demo_sand_startpos = (0,int(demo_size_height/2))
-    elif demo_falldir == DEMO_FALL_UP:
-        demo_sand_startpos = (int(demo_size_width/2),demo_size_height-1)
-    
-    this_sand = Rect( demo_sand_startpos[0]*DEMO_ZOOM_FACTOR, 
-                      demo_sand_startpos[1]*DEMO_ZOOM_FACTOR + demo_voffset, 
-                      DEMO_ZOOM_FACTOR, 
-                      DEMO_ZOOM_FACTOR, 
-                      fill = COLOR_SAND )
-    disp_group[DGROUP_2023DAY14].append(this_sand)
-    
-    gc.collect()
-    print("DEBUG: New sand. Free memory = %d bytes."%gc.mem_free())
-
 
 # SETUP ----------------------------------------------------------------------
 
@@ -392,11 +423,24 @@ disp_group[DGROUP_50STARS].append(label_stars)
 # disp_group[DGROUP_2023DAY14].append(bg)
 
 # AOC label at top
-# label_aoc = label.Label(font, text="Advent of Code\n   int y=2023;", color=0x009900)
-label_aoc = label.Label(font, text="AoC 2023      Day 14", color=COLOR_AOCGREEN)
+# label_aoc = label.Label(font, text="Advent of Code\n   int y=2021;", color=0x009900)
+label_aoc = label.Label(font, text="AoC 2021      Day 11", color=COLOR_AOCGREEN)
 label_aoc.anchor_point = (0.0,0.0) # left top
 label_aoc.anchored_position = (0,0)
 disp_group[DGROUP_2023DAY14].append(label_aoc)
+
+# "Load" label
+label_load = label.Label(font, text="Load")
+label_load.anchor_point = (0.0,0.0) # left top
+label_load.anchored_position = (0,100)
+disp_group[DGROUP_2023DAY14].append(label_load)
+
+# "Load" value label
+label_loadval = label.Label(font, text="   0")
+label_loadval.anchor_point = (0.0,0.0) # left top
+label_loadval.anchored_position = (0,115)
+disp_group[DGROUP_2023DAY14].append(label_loadval)
+
 
 # neopixel init ------------------------------------------
 # if USE_NEOPIXELS: # always init... just never turn on if not using
@@ -423,146 +467,38 @@ fiftystar_change_time = 0.0
 FIFTYSTAR_FLASHES = const(4)
 
 # demo global vars 
-demo_voffset = const(28)  # offset for start of demo view
 
-# demo_size_width  = int(board.DISPLAY.width / DEMO_ZOOM_FACTOR)
-# demo_size_height = int((board.DISPLAY.height-demo_voffset)/DEMO_ZOOM_FACTOR)
+demo_N_ROWS = 10
+demo_N_COLS = 10
 
-# # print('DEBUG: size of occ* is (%d,%d)'%(demo_size_width,demo_size_height))
+demo_loadval = 0
 
-# # change to occupied array, and record CUBE or ROCK
-# # this will conserve RAM, because arrays of bools don't work in circuitpython
-# # (specifically, you can't index into them properly for some reason)
-# demo_occ = np.zeros((demo_size_width,demo_size_height),dtype=np.int8) # bool does not work properly
-# DEMO_OCC_CUBE = const(1)
-# DEMO_OCC_ROCK = const(2)
+demo_rocks_falling = True 
+demo_rocks_moved = True 
+demo_stop = False 
+demo_process_rotate = False 
 
-# demo_step_delay_sec = 0.100 # 100 ms (0.100) looks good, but is slow for debug
+DEMO_FALL_DOWN  = const(1)
+DEMO_FALL_LEFT  = const(2)
+DEMO_FALL_RIGHT = const(3)
+DEMO_FALL_UP    = const(4)
+demo_falldir = DEMO_FALL_DOWN # provision for accelerometer direction reading
 
-# demo_sand_falling = False # If True, then sand needs to fall.  If False, then new sand needs to be generated.
-# demo_sand_moved = False 
-# demo_stop = False # set to True when no more sand can fall
-# demo_process_rotate = False 
+demo_step_delay_sec = 0.100 # 100 ms (0.100) looks good, but is slow for debug
 
-# DEMO_FALL_DOWN  = const(1)
-# DEMO_FALL_LEFT  = const(2)
-# DEMO_FALL_RIGHT = const(3)
-# DEMO_FALL_UP    = const(4)
-# demo_falldir = DEMO_FALL_DOWN # provision for accelerometer direction reading
+demo_map = np.zeros((demo_N_ROWS,demo_N_COLS),dtype=np.int8)
+# this is a demo_N_ROWS x demo_N_COLS matrix, mapping locations of grid
+#  values are one of the three below, where DEMO_V_EMPTY = 0
 
+DEMO_V_EMPTY = const(0)
+DEMO_V_ROCK  = const(1)
+DEMO_V_CUBE  = const(2)
 
-# # one-time setup for demo screen ----------------------------
-# # for 2023 day 14 demo, this means drawing the "rocks"
+demo_disp_circles = list()
 
-# # read input file or use default input
-# try:
-#     f = open("aoc2023_day14_init.txt")
-#     print("INFO: reading init file")
-# except:
-#     f = open("aoc2023_day14_ex.txt")
-#     print("INFO: using default init") 
-    
+demo_display_group_init_size = len(disp_group[DGROUP_2023DAY14])
 
-# regex_space = re.compile(" ")
-# regex_comma = re.compile(",")
-
-# for line in f.readlines():
-#     # skip short lines
-#     if len(line) <= 1:
-#         next 
-        
-#     # print("DEBUG: processing line: %s"%line)
-        
-#     # add rocks
-#     ipair = 0
-#     current = (0,0)
-#     for s in regex_space.split(line):
-#         # skip short segments and arrows
-#         if len(s) < 3:
-#             continue 
-            
-#         # print("DEBUG: processing coords = '%s' of len = %d"%(s,len(s)))
-            
-#         # parse coordinates
-#         coord = [0,0]
-#         for (iscm,scm) in enumerate(regex_comma.split(s)):
-#             coord[iscm] = int(scm) 
-            
-#         # print("DEBUG: coord parsed is (%d,%d)"%(coord[0],coord[1]))
-            
-#         # fill in demo_occ and draw cubes as rectangles
-#         if ipair == 0:
-#             current = tuple(coord) 
-#             demo_occ[current] = DEMO_OCC_CUBE 
-#         else: 
-#             if coord[0] > current[0]: # fill towards right
-#                 # draw rect
-#                 this_rect = Rect( current[0]*DEMO_ZOOM_FACTOR, 
-#                                   current[1]*DEMO_ZOOM_FACTOR + demo_voffset, 
-#                                   (coord[0] - current[0] + 1)*DEMO_ZOOM_FACTOR, 
-#                                   DEMO_ZOOM_FACTOR, 
-#                                   fill = COLOR_CUBE )
-#                 disp_group[DGROUP_2023DAY14].append(this_rect)
-#                 # fill in demo_occ 
-#                 for i in range(coord[0]-current[0]):
-#                     current = (current[0]+1, current[1]) 
-#                     demo_occ[current] = DEMO_OCC_CUBE 
-#             elif coord[0] < current[0]: # fill towards left
-#                 # draw rect
-#                 this_rect = Rect( coord[0]*DEMO_ZOOM_FACTOR, 
-#                                   current[1]*DEMO_ZOOM_FACTOR + demo_voffset, 
-#                                   (current[0] - coord[0] + 1)*DEMO_ZOOM_FACTOR, 
-#                                   DEMO_ZOOM_FACTOR, 
-#                                   fill = COLOR_CUBE )
-#                 disp_group[DGROUP_2023DAY14].append(this_rect)
-#                 # fill in demo_occ 
-#                 for i in range(current[0]-coord[0]):
-#                     current = (current[0]-1, current[1]) 
-#                     demo_occ[current] = DEMO_OCC_CUBE 
-#             elif coord[1] > current[1]: # fill downward
-#                 # draw rect
-#                 this_rect = Rect( current[0]*DEMO_ZOOM_FACTOR, 
-#                                   current[1]*DEMO_ZOOM_FACTOR + demo_voffset, 
-#                                   DEMO_ZOOM_FACTOR, 
-#                                   (coord[1] - current[1] + 1)*DEMO_ZOOM_FACTOR, 
-#                                   fill = COLOR_CUBE )
-#                 disp_group[DGROUP_2023DAY14].append(this_rect)
-#                 # fill in demo_occ 
-#                 for i in range(coord[1]-current[1]):
-#                     current = (current[0], current[1]+1) 
-#                     demo_occ[current] = DEMO_OCC_ROCK 
-#             elif coord[1] < current[1]: # fill upward
-#                 # draw rect
-#                 this_rect = Rect( current[0]*DEMO_ZOOM_FACTOR, 
-#                                   coord[1]*DEMO_ZOOM_FACTOR + demo_voffset, 
-#                                   DEMO_ZOOM_FACTOR, 
-#                                   (current[1] - coord[1] + 1)*DEMO_ZOOM_FACTOR, 
-#                                   fill = COLOR_ROCK )
-#                 disp_group[DGROUP_2023DAY14].append(this_rect)
-#                 # fill in demo_occ 
-#                 for i in range(current[1]-coord[1]):
-#                     current = (current[0], current[1]-1) 
-#                     demo_occ[current] = DEMO_OCC_ROCK 
-#             else: # this should only happen if a repeated point is given
-#                 # draw rect
-#                 this_rect = Rect( current[0]*DEMO_ZOOM_FACTOR, 
-#                                   current[1]*DEMO_ZOOM_FACTOR + demo_voffset, 
-#                                   DEMO_ZOOM_FACTOR, 
-#                                   DEMO_ZOOM_FACTOR, 
-#                                   fill = COLOR_ROCK )
-#                 disp_group[DGROUP_2023DAY14].append(this_rect)
-#                 # fill in demo_occ 
-#                 demo_occ[current] = DEMO_OCC_ROCK 
-                
-#             # print("DEBUG: coord   = (%d,%d)"%(coord[0],coord[1]))
-#             # print("DEBUG: current = (%d,%d)"%(current[0],current[1]))
-#             # assert(current==coord) # fails incorrectly
-            
-#         ipair += 1
-
-# f.close()
-
-# demo_display_group_init_size = len(disp_group[DGROUP_2023DAY14])
+demo_init()
     
 # report free memory ----------------------------------------
 print("INFO: Free memory = %d bytes."%gc.mem_free())
