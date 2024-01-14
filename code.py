@@ -1,6 +1,6 @@
 # Advent of Code "Trophy"
-# 2022 Edition
-
+# 2023 Edition
+# Demo of Day 14 (rocks falling) for visualization
 
 # PARAMETERS AND CONSTANTS ----------------------------------------------------
 
@@ -17,11 +17,10 @@ COLOR_WHITE  = 0xFFFFFF
 COLOR_BLACK  = 0x000000
 COLOR_GRAY   = 0x888888
 COLOR_YELLOW = 0xFFFF00
-
-DEMO_ZOOM_FACTOR = const(4) # runs out of RAM if < 4
+COLOR_BROWN  = 0xA52A2A
 
 COLOR_ROCK   = COLOR_GRAY
-COLOR_SAND   = COLOR_YELLOW
+COLOR_CUBE   = COLOR_BROWN
 
 # IMPORTS --------------------------------------------------------------------
 import board
@@ -57,22 +56,15 @@ def update_label_stars(star_count):
 
 # init demo
 # there's not going to be a lot of error handling here...
-def demo_init():
+def demo_init(): # TODO going to need a lot of updates
     global disp_group 
     global demo_display_group_init_size
-    global demo_sand_falling
+    global demo_rocks_falling
     global demo_stop
     
-    
-    # erase all sand from demo_occ
-    for i in range(demo_size_width):
-        for j in range(demo_size_height):
-            if demo_occ[i,j] == DEMO_OCC_SAND:
-                demo_occ[i,j] = 0
-    
     # remove all sand objects (anything drawn after initial init)
-    while len(disp_group[DGROUP_2022DAY14]) > demo_display_group_init_size:
-        disp_group[DGROUP_2022DAY14].pop() 
+    while len(disp_group[DGROUP_2023DAY14]) > demo_display_group_init_size:
+        disp_group[DGROUP_2023DAY14].pop() 
         
     # send out garbage collector 
     gc.collect()
@@ -127,7 +119,7 @@ def demo_check_rotation():
         demo_sand_falling = True 
         demo_generate_sand()
     
-# demo-related function: try to move the sand (the one at the end of disp_group[DGROUP_2022DAY14])
+# demo-related function: try to move the rocks (the one at the end of disp_group[DGROUP_2023DAY14])
 def demo_sand_fall() :
     global demo_sand_falling 
     global demo_sand_moved 
@@ -170,7 +162,7 @@ def demo_sand_fall() :
 
     bHasMoved = False
     
-    falling_sand = disp_group[DGROUP_2022DAY14][-1]
+    falling_sand = disp_group[DGROUP_2023DAY14][-1]
     
     # compute effective coordinates in demo_occ 
     sand_x_mapped = int(falling_sand.x/DEMO_ZOOM_FACTOR)
@@ -240,7 +232,7 @@ def demo_generate_sand():
                       DEMO_ZOOM_FACTOR, 
                       DEMO_ZOOM_FACTOR, 
                       fill = COLOR_SAND )
-    disp_group[DGROUP_2022DAY14].append(this_sand)
+    disp_group[DGROUP_2023DAY14].append(this_sand)
     
     gc.collect()
     print("DEBUG: New sand. Free memory = %d bytes."%gc.mem_free())
@@ -256,10 +248,10 @@ font = bitmap_font.load_font("fonts/SourceCodePro-subset_32_126-10pt.bdf",
 disp_group = list()
 disp_group.append(displayio.Group()) # disp_group[0] for main leaderboard
 disp_group.append(displayio.Group()) # disp_group[1] for first-to-50 stars
-disp_group.append(displayio.Group()) # disp_group[2] for 2022 day14 demo
+disp_group.append(displayio.Group()) # disp_group[2] for 2023 day14 demo
 DGROUP_MAIN      = const(0)
 DGROUP_50STARS   = const(1)
-DGROUP_2022DAY14 = const(2)
+DGROUP_2023DAY14 = const(2)
 
 # build common display group assets - DOES NOT WORK, CANNOT ADD OBJECTS TO MULTIPLE DISPLAY GROUPS
 #label_aoc = label.Label(font, text="Advent of Code\n  int y=202x;", color=0x009900)
@@ -304,7 +296,7 @@ if USE_ACCEL:
 # disp_group[DGROUP_MAIN].append(bg)
 
 # AOC label at top
-label_aoc = label.Label(font, text="Advent of Code\n   int y=2022;", color=COLOR_AOCGREEN)
+label_aoc = label.Label(font, text="Advent of Code\n   int y=2023;", color=COLOR_AOCGREEN)
 label_aoc.anchor_point = (0.0,0.0) # upper left
 label_aoc.anchored_position = (0,0)
 disp_group[DGROUP_MAIN].append(label_aoc)
@@ -315,35 +307,35 @@ label_leaderboard.anchor_point = (0.5,0.0) # middle top
 label_leaderboard.anchored_position = (board.DISPLAY.width/2,45)
 disp_group[DGROUP_MAIN].append(label_leaderboard)
 
-# first place
-label_1st = label.Label(font,text="1st:   Sean McCarthy")
+# first place                             NNNNNNNNNNNNN
+label_1st = label.Label(font,text="1st:   DominickBeamn")
 label_1st.anchor_point = (0.0,0.0) # left top
 label_1st.anchored_position = (0,60)
 disp_group[DGROUP_MAIN].append(label_1st)
 
-label_1st_stars = label.Label(font,text="    41*",color=COLOR_AOCYELLOW)
+label_1st_stars = label.Label(font,text="    50*",color=COLOR_AOCYELLOW)
 label_1st_stars.anchor_point = (0.0,0.0) # left top
 label_1st_stars.anchored_position = (-1,60+1)
 disp_group[DGROUP_MAIN].append(label_1st_stars)
 
-# second place
-label_2nd = label.Label(font,text="2nd:   DaveBuscaglia")
+# second place                            NNNNNNNNNNNNN
+label_2nd = label.Label(font,text="2nd:   Sean McCarthy")
 label_2nd.anchor_point = (0.0,0.0) # left top
 label_2nd.anchored_position = (0,75)
 disp_group[DGROUP_MAIN].append(label_2nd)
 
-label_2nd_stars = label.Label(font,text="    39*",color=COLOR_AOCYELLOW)
+label_2nd_stars = label.Label(font,text="    42*",color=COLOR_AOCYELLOW)
 label_2nd_stars.anchor_point = (0.0,0.0) # left top
 label_2nd_stars.anchored_position = (-1,75+1)
 disp_group[DGROUP_MAIN].append(label_2nd_stars)
 
-# third place
-label_3rd = label.Label(font,text="3rd:    Ash Evans")
+# third place                             NNNNNNNNNNNNN
+label_3rd = label.Label(font,text="3rd:   DaveBuscaglia")
 label_3rd.anchor_point = (0.0,0.0) # left top
 label_3rd.anchored_position = (0,90)
 disp_group[DGROUP_MAIN].append(label_3rd)
 
-label_3rd_stars = label.Label(font,text="    34*",color=COLOR_AOCYELLOW)
+label_3rd_stars = label.Label(font,text="    41*",color=COLOR_AOCYELLOW)
 label_3rd_stars.anchor_point = (0.0,0.0) # left top
 label_3rd_stars.anchored_position = (-1,90+1)
 disp_group[DGROUP_MAIN].append(label_3rd_stars)
@@ -361,7 +353,7 @@ disp_group[DGROUP_MAIN].append(label_more)
 # disp_group[DGROUP_50STARS].append(bg)
 
 # AOC label at top
-label_aoc = label.Label(font, text="Advent of Code\n   YEAR: 2022", color=COLOR_AOCGREEN)
+label_aoc = label.Label(font, text="Advent of Code\n   int y=2023;", color=COLOR_AOCGREEN)
 label_aoc.anchor_point = (0.0,0.0) # left top
 label_aoc.anchored_position = (0,0)
 disp_group[DGROUP_50STARS].append(label_aoc)
@@ -373,13 +365,13 @@ label_firstto50.anchored_position = (board.DISPLAY.width/2,45)
 disp_group[DGROUP_50STARS].append(label_firstto50)
 
 # Name
-label_firstto50name = label.Label(font,text="Dave Buscaglia", color=COLOR_AOCYELLOW)
+label_firstto50name = label.Label(font,text="Dominick Beaman", color=COLOR_AOCYELLOW)
 label_firstto50name.anchor_point = (0.5,0.0) # middle top
 label_firstto50name.anchored_position = (board.DISPLAY.width/2,60)
 disp_group[DGROUP_50STARS].append(label_firstto50name)
 
 # Date
-label_firstto50date = label.Label(font,text="Jan 23 2023 23:03:41")
+label_firstto50date = label.Label(font,text="before 12/31/2023!")
 label_firstto50date.anchor_point = (0.5,0.0) # middle top
 label_firstto50date.anchored_position = (board.DISPLAY.width/2,75)
 disp_group[DGROUP_50STARS].append(label_firstto50date)
@@ -393,18 +385,18 @@ label_stars.anchored_position = (0,100)
 disp_group[DGROUP_50STARS].append(label_stars)
 
 
-# build disp_group[DGROUP_2022DAY14] ---------------------
+# build disp_group[DGROUP_2023DAY14] ---------------------
 
 # # background -- looks bad when display is viewed from the side
 # bg = Rect(0, 0, board.DISPLAY.width, board.DISPLAY.height, fill=0x0f0f23)
-# disp_group[DGROUP_2022DAY14].append(bg)
+# disp_group[DGROUP_2023DAY14].append(bg)
 
 # AOC label at top
-# label_aoc = label.Label(font, text="Advent of Code\n   int y=2022;", color=0x009900)
-label_aoc = label.Label(font, text="AoC 2022      Day 14", color=COLOR_AOCGREEN)
+# label_aoc = label.Label(font, text="Advent of Code\n   int y=2023;", color=0x009900)
+label_aoc = label.Label(font, text="AoC 2023      Day 14", color=COLOR_AOCGREEN)
 label_aoc.anchor_point = (0.0,0.0) # left top
 label_aoc.anchored_position = (0,0)
-disp_group[DGROUP_2022DAY14].append(label_aoc)
+disp_group[DGROUP_2023DAY14].append(label_aoc)
 
 # neopixel init ------------------------------------------
 # if USE_NEOPIXELS: # always init... just never turn on if not using
@@ -433,144 +425,144 @@ FIFTYSTAR_FLASHES = const(4)
 # demo global vars 
 demo_voffset = const(28)  # offset for start of demo view
 
-demo_size_width  = int(board.DISPLAY.width / DEMO_ZOOM_FACTOR)
-demo_size_height = int((board.DISPLAY.height-demo_voffset)/DEMO_ZOOM_FACTOR)
+# demo_size_width  = int(board.DISPLAY.width / DEMO_ZOOM_FACTOR)
+# demo_size_height = int((board.DISPLAY.height-demo_voffset)/DEMO_ZOOM_FACTOR)
 
-# print('DEBUG: size of occ* is (%d,%d)'%(demo_size_width,demo_size_height))
+# # print('DEBUG: size of occ* is (%d,%d)'%(demo_size_width,demo_size_height))
 
-# change to occupied array, and record ROCK or SAND
-# this will conserve RAM, because arrays of bools don't work in circuitpython
-# (specifically, you can't index into them properly for some reason)
-demo_occ = np.zeros((demo_size_width,demo_size_height),dtype=np.int8) # bool does not work properly
-DEMO_OCC_ROCK = const(1)
-DEMO_OCC_SAND = const(2)
+# # change to occupied array, and record CUBE or ROCK
+# # this will conserve RAM, because arrays of bools don't work in circuitpython
+# # (specifically, you can't index into them properly for some reason)
+# demo_occ = np.zeros((demo_size_width,demo_size_height),dtype=np.int8) # bool does not work properly
+# DEMO_OCC_CUBE = const(1)
+# DEMO_OCC_ROCK = const(2)
 
-demo_step_delay_sec = 0.100 # 100 ms (0.100) looks good, but is slow for debug
+# demo_step_delay_sec = 0.100 # 100 ms (0.100) looks good, but is slow for debug
 
-demo_sand_falling = False # If True, then sand needs to fall.  If False, then new sand needs to be generated.
-demo_sand_moved = False 
-demo_stop = False # set to True when no more sand can fall
-demo_process_rotate = False 
+# demo_sand_falling = False # If True, then sand needs to fall.  If False, then new sand needs to be generated.
+# demo_sand_moved = False 
+# demo_stop = False # set to True when no more sand can fall
+# demo_process_rotate = False 
 
-DEMO_FALL_DOWN  = const(1)
-DEMO_FALL_LEFT  = const(2)
-DEMO_FALL_RIGHT = const(3)
-DEMO_FALL_UP    = const(4)
-demo_falldir = DEMO_FALL_DOWN # provision for accelerometer direction reading
+# DEMO_FALL_DOWN  = const(1)
+# DEMO_FALL_LEFT  = const(2)
+# DEMO_FALL_RIGHT = const(3)
+# DEMO_FALL_UP    = const(4)
+# demo_falldir = DEMO_FALL_DOWN # provision for accelerometer direction reading
 
 
-# one-time setup for demo screen ----------------------------
-# for 2022 day 14 demo, this means drawing the "rocks"
+# # one-time setup for demo screen ----------------------------
+# # for 2023 day 14 demo, this means drawing the "rocks"
 
-# read input file or use default input
-try:
-    f = open("aoc2022_day14_init.txt")
-    print("INFO: reading init file")
-except:
-    f = open("aoc2022_day14_ex.txt")
-    print("INFO: using default init") 
+# # read input file or use default input
+# try:
+#     f = open("aoc2023_day14_init.txt")
+#     print("INFO: reading init file")
+# except:
+#     f = open("aoc2023_day14_ex.txt")
+#     print("INFO: using default init") 
     
 
-regex_space = re.compile(" ")
-regex_comma = re.compile(",")
+# regex_space = re.compile(" ")
+# regex_comma = re.compile(",")
 
-for line in f.readlines():
-    # skip short lines
-    if len(line) <= 1:
-        next 
+# for line in f.readlines():
+#     # skip short lines
+#     if len(line) <= 1:
+#         next 
         
-    # print("DEBUG: processing line: %s"%line)
+#     # print("DEBUG: processing line: %s"%line)
         
-    # add rocks
-    ipair = 0
-    current = (0,0)
-    for s in regex_space.split(line):
-        # skip short segments and arrows
-        if len(s) < 3:
-            continue 
+#     # add rocks
+#     ipair = 0
+#     current = (0,0)
+#     for s in regex_space.split(line):
+#         # skip short segments and arrows
+#         if len(s) < 3:
+#             continue 
             
-        # print("DEBUG: processing coords = '%s' of len = %d"%(s,len(s)))
+#         # print("DEBUG: processing coords = '%s' of len = %d"%(s,len(s)))
             
-        # parse coordinates
-        coord = [0,0]
-        for (iscm,scm) in enumerate(regex_comma.split(s)):
-            coord[iscm] = int(scm) 
+#         # parse coordinates
+#         coord = [0,0]
+#         for (iscm,scm) in enumerate(regex_comma.split(s)):
+#             coord[iscm] = int(scm) 
             
-        # print("DEBUG: coord parsed is (%d,%d)"%(coord[0],coord[1]))
+#         # print("DEBUG: coord parsed is (%d,%d)"%(coord[0],coord[1]))
             
-        # fill in demo_occ and draw rocks as rectangles
-        if ipair == 0:
-            current = tuple(coord) 
-            demo_occ[current] = DEMO_OCC_ROCK 
-        else: 
-            if coord[0] > current[0]: # fill towards right
-                # draw rect
-                this_rect = Rect( current[0]*DEMO_ZOOM_FACTOR, 
-                                  current[1]*DEMO_ZOOM_FACTOR + demo_voffset, 
-                                  (coord[0] - current[0] + 1)*DEMO_ZOOM_FACTOR, 
-                                  DEMO_ZOOM_FACTOR, 
-                                  fill = COLOR_ROCK )
-                disp_group[DGROUP_2022DAY14].append(this_rect)
-                # fill in demo_occ 
-                for i in range(coord[0]-current[0]):
-                    current = (current[0]+1, current[1]) 
-                    demo_occ[current] = DEMO_OCC_ROCK 
-            elif coord[0] < current[0]: # fill towards left
-                # draw rect
-                this_rect = Rect( coord[0]*DEMO_ZOOM_FACTOR, 
-                                  current[1]*DEMO_ZOOM_FACTOR + demo_voffset, 
-                                  (current[0] - coord[0] + 1)*DEMO_ZOOM_FACTOR, 
-                                  DEMO_ZOOM_FACTOR, 
-                                  fill = COLOR_ROCK )
-                disp_group[DGROUP_2022DAY14].append(this_rect)
-                # fill in demo_occ 
-                for i in range(current[0]-coord[0]):
-                    current = (current[0]-1, current[1]) 
-                    demo_occ[current] = DEMO_OCC_ROCK 
-            elif coord[1] > current[1]: # fill downward
-                # draw rect
-                this_rect = Rect( current[0]*DEMO_ZOOM_FACTOR, 
-                                  current[1]*DEMO_ZOOM_FACTOR + demo_voffset, 
-                                  DEMO_ZOOM_FACTOR, 
-                                  (coord[1] - current[1] + 1)*DEMO_ZOOM_FACTOR, 
-                                  fill = COLOR_ROCK )
-                disp_group[DGROUP_2022DAY14].append(this_rect)
-                # fill in demo_occ 
-                for i in range(coord[1]-current[1]):
-                    current = (current[0], current[1]+1) 
-                    demo_occ[current] = DEMO_OCC_ROCK 
-            elif coord[1] < current[1]: # fill upward
-                # draw rect
-                this_rect = Rect( current[0]*DEMO_ZOOM_FACTOR, 
-                                  coord[1]*DEMO_ZOOM_FACTOR + demo_voffset, 
-                                  DEMO_ZOOM_FACTOR, 
-                                  (current[1] - coord[1] + 1)*DEMO_ZOOM_FACTOR, 
-                                  fill = COLOR_ROCK )
-                disp_group[DGROUP_2022DAY14].append(this_rect)
-                # fill in demo_occ 
-                for i in range(current[1]-coord[1]):
-                    current = (current[0], current[1]-1) 
-                    demo_occ[current] = DEMO_OCC_ROCK 
-            else: # this should only happen if a repeated point is given
-                # draw rect
-                this_rect = Rect( current[0]*DEMO_ZOOM_FACTOR, 
-                                  current[1]*DEMO_ZOOM_FACTOR + demo_voffset, 
-                                  DEMO_ZOOM_FACTOR, 
-                                  DEMO_ZOOM_FACTOR, 
-                                  fill = COLOR_ROCK )
-                disp_group[DGROUP_2022DAY14].append(this_rect)
-                # fill in demo_occ 
-                demo_occ[current] = DEMO_OCC_ROCK 
+#         # fill in demo_occ and draw cubes as rectangles
+#         if ipair == 0:
+#             current = tuple(coord) 
+#             demo_occ[current] = DEMO_OCC_CUBE 
+#         else: 
+#             if coord[0] > current[0]: # fill towards right
+#                 # draw rect
+#                 this_rect = Rect( current[0]*DEMO_ZOOM_FACTOR, 
+#                                   current[1]*DEMO_ZOOM_FACTOR + demo_voffset, 
+#                                   (coord[0] - current[0] + 1)*DEMO_ZOOM_FACTOR, 
+#                                   DEMO_ZOOM_FACTOR, 
+#                                   fill = COLOR_CUBE )
+#                 disp_group[DGROUP_2023DAY14].append(this_rect)
+#                 # fill in demo_occ 
+#                 for i in range(coord[0]-current[0]):
+#                     current = (current[0]+1, current[1]) 
+#                     demo_occ[current] = DEMO_OCC_CUBE 
+#             elif coord[0] < current[0]: # fill towards left
+#                 # draw rect
+#                 this_rect = Rect( coord[0]*DEMO_ZOOM_FACTOR, 
+#                                   current[1]*DEMO_ZOOM_FACTOR + demo_voffset, 
+#                                   (current[0] - coord[0] + 1)*DEMO_ZOOM_FACTOR, 
+#                                   DEMO_ZOOM_FACTOR, 
+#                                   fill = COLOR_CUBE )
+#                 disp_group[DGROUP_2023DAY14].append(this_rect)
+#                 # fill in demo_occ 
+#                 for i in range(current[0]-coord[0]):
+#                     current = (current[0]-1, current[1]) 
+#                     demo_occ[current] = DEMO_OCC_CUBE 
+#             elif coord[1] > current[1]: # fill downward
+#                 # draw rect
+#                 this_rect = Rect( current[0]*DEMO_ZOOM_FACTOR, 
+#                                   current[1]*DEMO_ZOOM_FACTOR + demo_voffset, 
+#                                   DEMO_ZOOM_FACTOR, 
+#                                   (coord[1] - current[1] + 1)*DEMO_ZOOM_FACTOR, 
+#                                   fill = COLOR_CUBE )
+#                 disp_group[DGROUP_2023DAY14].append(this_rect)
+#                 # fill in demo_occ 
+#                 for i in range(coord[1]-current[1]):
+#                     current = (current[0], current[1]+1) 
+#                     demo_occ[current] = DEMO_OCC_ROCK 
+#             elif coord[1] < current[1]: # fill upward
+#                 # draw rect
+#                 this_rect = Rect( current[0]*DEMO_ZOOM_FACTOR, 
+#                                   coord[1]*DEMO_ZOOM_FACTOR + demo_voffset, 
+#                                   DEMO_ZOOM_FACTOR, 
+#                                   (current[1] - coord[1] + 1)*DEMO_ZOOM_FACTOR, 
+#                                   fill = COLOR_ROCK )
+#                 disp_group[DGROUP_2023DAY14].append(this_rect)
+#                 # fill in demo_occ 
+#                 for i in range(current[1]-coord[1]):
+#                     current = (current[0], current[1]-1) 
+#                     demo_occ[current] = DEMO_OCC_ROCK 
+#             else: # this should only happen if a repeated point is given
+#                 # draw rect
+#                 this_rect = Rect( current[0]*DEMO_ZOOM_FACTOR, 
+#                                   current[1]*DEMO_ZOOM_FACTOR + demo_voffset, 
+#                                   DEMO_ZOOM_FACTOR, 
+#                                   DEMO_ZOOM_FACTOR, 
+#                                   fill = COLOR_ROCK )
+#                 disp_group[DGROUP_2023DAY14].append(this_rect)
+#                 # fill in demo_occ 
+#                 demo_occ[current] = DEMO_OCC_ROCK 
                 
-            # print("DEBUG: coord   = (%d,%d)"%(coord[0],coord[1]))
-            # print("DEBUG: current = (%d,%d)"%(current[0],current[1]))
-            # assert(current==coord) # fails incorrectly
+#             # print("DEBUG: coord   = (%d,%d)"%(coord[0],coord[1]))
+#             # print("DEBUG: current = (%d,%d)"%(current[0],current[1]))
+#             # assert(current==coord) # fails incorrectly
             
-        ipair += 1
+#         ipair += 1
 
-f.close()
+# f.close()
 
-demo_display_group_init_size = len(disp_group[DGROUP_2022DAY14])
+# demo_display_group_init_size = len(disp_group[DGROUP_2023DAY14])
     
 # report free memory ----------------------------------------
 print("INFO: Free memory = %d bytes."%gc.mem_free())
@@ -645,28 +637,29 @@ while True:
                     fiftystar_change_time = time.monotonic() + fiftystar_count_delay_sec
 
 
-    elif dgroup_show == DGROUP_2022DAY14:
-        if time.monotonic() >= demo_next_step_time:
+    elif dgroup_show == DGROUP_2023DAY14:
+        pass
+    #     if time.monotonic() >= demo_next_step_time:
             
-            if USE_ACCEL: 
-                # check rotation
-                demo_check_rotation()
+    #         if USE_ACCEL: 
+    #             # check rotation
+    #             demo_check_rotation()
             
-            if not demo_stop: 
+    #         if not demo_stop: 
                 
-                # do sand stuff
-                if demo_sand_falling: 
-                    demo_sand_fall() 
-                elif not demo_sand_falling and not demo_sand_moved: # full up
-                    print('DEBUG: detected full sand condition')
-                    demo_stop = True 
-                else:
-                    demo_generate_sand() 
-                    demo_sand_moved = False
-                    demo_sand_falling = True 
+    #             # do sand stuff
+    #             if demo_sand_falling: 
+    #                 demo_sand_fall() 
+    #             elif not demo_sand_falling and not demo_sand_moved: # full up
+    #                 print('DEBUG: detected full sand condition')
+    #                 demo_stop = True 
+    #             else:
+    #                 demo_generate_sand() 
+    #                 demo_sand_moved = False
+    #                 demo_sand_falling = True 
             
-            # set time for next step increment
-            demo_next_step_time = time.monotonic() + demo_step_delay_sec
+    #         # set time for next step increment
+    #         demo_next_step_time = time.monotonic() + demo_step_delay_sec
     else:
         print("ERROR: undefined state: %d"%dgroup_show)
 
@@ -695,7 +688,7 @@ while True:
             fiftystar_flash_count = 0
             fiftystar_time_change = time.monotonic() + 2.0*fiftystar_flash_delay_sec
 
-        elif dgroup_show == DGROUP_2022DAY14:
+        elif dgroup_show == DGROUP_2023DAY14:
             print("INFO: transitioning to DEMO screen")
             demo_init()
             demo_next_step_time = time.monotonic() + 2.0*demo_step_delay_sec 
