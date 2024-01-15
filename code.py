@@ -215,7 +215,7 @@ def demo_check_rotation():
             # disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_INDEX].x = DEMO_CIR_START_X-2
             # disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_INDEX].y = DEMO_CIR_START_Y+(2*DEMO_CIR_RADIUS+2)*DEMO_N_ROWS
             # disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_INDEX].width  = (2*DEMO_CIR_RADIUS+2)*DEMO_N_ROWS+4
-            # disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_INDEX].height = 2
+            # disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_INDEX].height = 2 # note: can't update height and width (apparently)
             print('INFO: changing rotation direction to DOWN')
         elif demo_falldir == DEMO_FALL_UP:
             disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_WIDE_INDEX].x = DEMO_CIR_START_X-2
@@ -465,7 +465,7 @@ label_firstto50name.anchored_position = (board.DISPLAY.width/2,60)
 disp_group[DGROUP_50STARS].append(label_firstto50name)
 
 # Date
-label_firstto50date = label.Label(font,text="before 12/31/2023!")
+label_firstto50date = label.Label(font,text="24 Dec 2023 21:35!")
 label_firstto50date.anchor_point = (0.5,0.0) # middle top
 label_firstto50date.anchored_position = (board.DISPLAY.width/2,75)
 disp_group[DGROUP_50STARS].append(label_firstto50date)
