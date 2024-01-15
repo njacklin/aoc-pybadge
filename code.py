@@ -192,15 +192,15 @@ def demo_find_rock_in_disp_group(c_row,c_col):
     global demo_disp_circles
 
     (cir_x,cir_y) = demo_convert_rowcol_to_circlecoord(c_row,c_col)
-    print("DEBUG: in find_rock searching for rock at map index (%d,%d) with coords (%d,%d)"%(c_row,c_col,cir_x,cir_y))
+    # print("DEBUG: in find_rock searching for rock at map index (%d,%d) with coords (%d,%d)"%(c_row,c_col,cir_x,cir_y))
 
     for Rock in demo_disp_circles:
-        print("DEBUG: (Rock.x,Rock.y)=(%d,%d)"%(Rock.x,Rock.y))
+        # print("DEBUG: (Rock.x,Rock.y)=(%d,%d)"%(Rock.x,Rock.y))
         if Rock.x + DEMO_CIR_RADIUS == cir_x and Rock.y + DEMO_CIR_RADIUS == cir_y : # constructor is a convenience function(?), x/y are shifted by CIR_RADIUS on read back
            return Rock 
 
     print("ERROR: did not find a match in find_rock")
-    time.sleep(15.0) # DEBUG
+    time.sleep(1.0) # DEBUG
 
     return None 
     
@@ -225,7 +225,7 @@ def demo_rocks_fall() :
     else:
         raise ValueError(demo_falldir)
     
-    print("DEBUG: inside demo_rocks_fall()") # debug
+    # print("DEBUG: inside demo_rocks_fall()") # debug
     
     # scan map and try to move each rock.  if one moves, bail out (this will make "falling" visible)
     for irow in range(demo_N_ROWS):
@@ -233,11 +233,11 @@ def demo_rocks_fall() :
             # print("DEBUG: checking map at (%d,%d), value found = %d"%(irow,icol,demo_map[irow,icol]))
             if demo_map[irow,icol] == DEMO_V_ROCK:
 
-                # try: 
                 # print("DEBUG: rock found at (%d,%d)"%(irow,icol))
-                # DANGEROUS # print("DEBUG: value where we want to move to is %d (EMPTY = %d)"%(demo_map[irow+fall_y,icol+fall_x],DEMO_V_EMPTY))
-                print("DEBUG: irow = %d, fall_y = %d, demo_N_ROWS = %d, icol = %d, fall_x= %d, demo_N_COLS = %d"%(irow,fall_y,demo_N_ROWS,icol,fall_x,demo_N_COLS))
-                print("DEBUG: 0 <= irow+fall_y < demo_N_ROWS is %s and 0 <= icol+fall_x < demo_N_COLS is %s"%(0 <= irow+fall_y < demo_N_ROWS, 0 <= icol+fall_x < demo_N_COLS ))
+                # DANGEROUS - reading beyond indices doesn't always fail?? extends array!
+                #   DO NOT DO: # print("DEBUG: value where we want to move to is %d (EMPTY = %d)"%(demo_map[irow+fall_y,icol+fall_x],DEMO_V_EMPTY))
+                # print("DEBUG: irow = %d, fall_y = %d, demo_N_ROWS = %d, icol = %d, fall_x= %d, demo_N_COLS = %d"%(irow,fall_y,demo_N_ROWS,icol,fall_x,demo_N_COLS))
+                # print("DEBUG: 0 <= irow+fall_y < demo_N_ROWS is %s and 0 <= icol+fall_x < demo_N_COLS is %s"%(0 <= irow+fall_y < demo_N_ROWS, 0 <= icol+fall_x < demo_N_COLS ))
                 if 0 <= irow+fall_y < demo_N_ROWS and 0 <= icol+fall_x < demo_N_COLS and demo_map[irow+fall_y,icol+fall_x] == DEMO_V_EMPTY:
                     # update position in demo_map
                     demo_map[irow+fall_y,icol+fall_x] = DEMO_V_ROCK 
@@ -252,23 +252,18 @@ def demo_rocks_fall() :
                         raise Exception("*** find_rock failed !!!") # fucks up state in demo_map... not atomic
                     
                     (new_cir_x,new_cir_y) = demo_convert_rowcol_to_circlecoord(irow+fall_y,icol+fall_x)
-                    Rock.x = new_cir_x - DEMO_CIR_RADIUS # TODO verify subtraction is needed
+                    Rock.x = new_cir_x - DEMO_CIR_RADIUS
                     Rock.y = new_cir_y - DEMO_CIR_RADIUS 
 
                     # if we successfully moved a rock, return early
-                    print("DEBUG: *** moved a rock ***") # debug
+                    # print("DEBUG: *** moved a rock ***") # debug
                     return 
-                # except Exception as e: 
-                #     print("ERROR: %s"%e)
-                #     pass # must have exceeded boundaries... just move on
-
-                # print("DEBUG: --- sleeping ---")
-                # time.sleep(15.0) # DEBUG
 
     # if we get here, then no rocks were moved
-    demo_stop = False # TODO was True here... this basically makes demo_stop always False 
+    demo_stop = False # was True here... this basically makes demo_stop always False 
+    # NOTE: the CPU has to be doing something, so no point of demo_stop = True. 
 
-    print("DEBUG: hit bottom of demo_rocks_fall() with no rock moved") # debug
+    # print("DEBUG: hit bottom of demo_rocks_fall() with no rock moved") # debug
     
     
 
