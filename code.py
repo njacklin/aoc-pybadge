@@ -192,15 +192,15 @@ def demo_find_rock_in_disp_group(c_row,c_col):
     global demo_disp_circles
 
     (cir_x,cir_y) = demo_convert_rowcol_to_circlecoord(c_row,c_col)
-    # print("DEBUG: in find_rock searching for rock at map index (%d,%d) with coords (%d,%d)"%(c_row,c_col,cir_x,cir_y))
+    print("DEBUG: in find_rock searching for rock at map index (%d,%d) with coords (%d,%d)"%(c_row,c_col,cir_x,cir_y))
 
     for Rock in demo_disp_circles:
-        # print("DEBUG: (Rock.x,Rock.y)=(%d,%d)"%(Rock.x,Rock.y))
-        #if Rock.x + DEMO_CIR_RADIUS == cir_x and Rock.y + DEMO_CIR_RADIUS == cir_y : # constructor is a convenience function(?), x/y are shifted by CIR_RADIUS on read back
-        # loosen up match criteria!
-        if     Rock.x - 2*DEMO_CIR_RADIUS <= cir_x <= Rock.x + 2*DEMO_CIR_RADIUS \
-           and Rock.y - 2*DEMO_CIR_RADIUS <= cir_y <= Rock.y + 2*DEMO_CIR_RADIUS : 
-            return Rock 
+        print("DEBUG: (Rock.x,Rock.y)=(%d,%d)"%(Rock.x,Rock.y))
+        if Rock.x + DEMO_CIR_RADIUS == cir_x and Rock.y + DEMO_CIR_RADIUS == cir_y : # constructor is a convenience function(?), x/y are shifted by CIR_RADIUS on read back
+           return Rock 
+
+    print("ERROR: did not find a match in find_rock")
+    time.sleep(15.0) # DEBUG
 
     return None 
     
@@ -208,6 +208,8 @@ def demo_find_rock_in_disp_group(c_row,c_col):
 def demo_rocks_fall() :
     global demo_stop 
     global demo_map
+    global demo_N_ROWS
+    global demo_N_COLS
     
     fall_x = 0 # amount to "fall" in x direction
     fall_y = 0 # amount to "fall" in y direction
@@ -231,32 +233,34 @@ def demo_rocks_fall() :
             # print("DEBUG: checking map at (%d,%d), value found = %d"%(irow,icol,demo_map[irow,icol]))
             if demo_map[irow,icol] == DEMO_V_ROCK:
 
-                try: 
-                    # print("DEBUG: rock found at (%d,%d)"%(irow,icol))
-                    # print("DEBUG: value where we want to move to is %d (EMPTY = %d)"%(demo_map[irow+fall_y,icol+fall_x],DEMO_V_EMPTY))
-                    if demo_map[irow+fall_y,icol+fall_x] == DEMO_V_EMPTY:
-                        # update position in demo_map
-                        demo_map[irow+fall_y,icol+fall_x] = DEMO_V_ROCK 
-                        demo_map[irow,icol] = DEMO_V_EMPTY 
+                # try: 
+                # print("DEBUG: rock found at (%d,%d)"%(irow,icol))
+                # DANGEROUS # print("DEBUG: value where we want to move to is %d (EMPTY = %d)"%(demo_map[irow+fall_y,icol+fall_x],DEMO_V_EMPTY))
+                print("DEBUG: irow = %d, fall_y = %d, demo_N_ROWS = %d, icol = %d, fall_x= %d, demo_N_COLS = %d"%(irow,fall_y,demo_N_ROWS,icol,fall_x,demo_N_COLS))
+                print("DEBUG: 0 <= irow+fall_y < demo_N_ROWS is %s and 0 <= icol+fall_x < demo_N_COLS is %s"%(0 <= irow+fall_y < demo_N_ROWS, 0 <= icol+fall_x < demo_N_COLS ))
+                if 0 <= irow+fall_y < demo_N_ROWS and 0 <= icol+fall_x < demo_N_COLS and demo_map[irow+fall_y,icol+fall_x] == DEMO_V_EMPTY:
+                    # update position in demo_map
+                    demo_map[irow+fall_y,icol+fall_x] = DEMO_V_ROCK 
+                    demo_map[irow,icol] = DEMO_V_EMPTY 
 
-                        # update position in display_group drawing
-                        Rock = demo_find_rock_in_disp_group(irow,icol)
-                        if not Rock:
-                            # unroll changes to demo_map to avoid state corruption
-                            demo_map[irow+fall_y,icol+fall_x] = DEMO_V_EMPTY 
-                            demo_map[irow,icol] = DEMO_V_ROCK 
-                            raise Exception("*** find_rock failed !!!") # fucks up state in demo_map... not atomic
-                        
-                        (new_cir_x,new_cir_y) = demo_convert_rowcol_to_circlecoord(irow+fall_y,icol+fall_x)
-                        Rock.x = new_cir_x - DEMO_CIR_RADIUS # TODO verify subtraction is needed
-                        Rock.y = new_cir_y - DEMO_CIR_RADIUS 
+                    # update position in display_group drawing
+                    Rock = demo_find_rock_in_disp_group(irow,icol)
+                    if not Rock:
+                        # unroll changes to demo_map to avoid state corruption
+                        demo_map[irow+fall_y,icol+fall_x] = DEMO_V_EMPTY 
+                        demo_map[irow,icol] = DEMO_V_ROCK 
+                        raise Exception("*** find_rock failed !!!") # fucks up state in demo_map... not atomic
+                    
+                    (new_cir_x,new_cir_y) = demo_convert_rowcol_to_circlecoord(irow+fall_y,icol+fall_x)
+                    Rock.x = new_cir_x - DEMO_CIR_RADIUS # TODO verify subtraction is needed
+                    Rock.y = new_cir_y - DEMO_CIR_RADIUS 
 
-                        # if we successfully moved a rock, return early
-                        print("DEBUG: *** moved a rock ***") # debug
-                        return 
-                except Exception as e: 
-                    print("ERROR: %s"%e)
-                    pass # must have exceeded boundaries... just move on
+                    # if we successfully moved a rock, return early
+                    print("DEBUG: *** moved a rock ***") # debug
+                    return 
+                # except Exception as e: 
+                #     print("ERROR: %s"%e)
+                #     pass # must have exceeded boundaries... just move on
 
                 # print("DEBUG: --- sleeping ---")
                 # time.sleep(15.0) # DEBUG
