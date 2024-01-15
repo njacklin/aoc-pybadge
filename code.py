@@ -57,6 +57,31 @@ def update_label_stars(star_count):
     global label_stars
     label_stars.text = ("*"*star_count) + (" "*(MAX_CHAR-star_count))
 
+# set flash count label
+def update_label_loadval(): # takes in an int
+    global label_loadval
+    global demo_loadval 
+    global demo_map
+
+    # update demo_loadval by reading demo_map
+    demo_loadval = 0
+    for irow in range(demo_N_ROWS):
+        for icol in range(demo_N_COLS):
+            if demo_map[irow,icol] == DEMO_V_ROCK:
+                if   demo_falldir == DEMO_FALL_UP:
+                    demo_loadval += (demo_N_ROWS - irow) 
+                elif demo_falldir == DEMO_FALL_DOWN: 
+                    demo_loadval += (irow + 1)
+                elif demo_falldir == DEMO_FALL_RIGHT: 
+                    demo_loadval += (demo_N_COLS - icol)
+                elif demo_falldir == DEMO_FALL_LEFT: 
+                    demo_loadval += (icol + 1)
+                else: 
+                    raise ValueError("Invalid demo_falldir = %s"%demo_falldir)    
+
+    # update label asset 
+    label_loadval.text = "%4d" % demo_loadval
+
 # demo_convert_rowcol_to_circlecoords
 #  be very careful of row/col and x/y directions.  rows go down y and cols go down x.
 def demo_convert_rowcol_to_circlecoord(c_row,c_col):
@@ -125,7 +150,7 @@ def demo_init():
                                                   stroke=1,
                                                   outline=COLOR_LTGRAY) )
                 
-                print("DEBUG: creating rock at map index (%d,%d) with coords (%d,%d)"%(irow,icol,cir_x,cir_y))
+                # print("DEBUG: creating rock at map index (%d,%d) with coords (%d,%d)"%(irow,icol,cir_x,cir_y))
                 
                 disp_group[DGROUP_2023DAY14].append(demo_disp_circles[-1])
 
@@ -264,7 +289,7 @@ def demo_rocks_fall() :
     # NOTE: the CPU has to be doing something, so no point of demo_stop = True. 
 
     # print("DEBUG: hit bottom of demo_rocks_fall() with no rock moved") # debug
-    
+    update_label_loadval()    
     
 
 # SETUP ----------------------------------------------------------------------
@@ -483,7 +508,8 @@ DEMO_FALL_RIGHT = const(3)
 DEMO_FALL_UP    = const(4)
 demo_falldir = DEMO_FALL_DOWN # provision for accelerometer direction reading
 
-demo_step_delay_sec = 0.1 # 100 ms (0.100) looks good # TODO set
+# MAIN ANIMATION SPEED KNOB
+demo_step_delay_sec = 0.010 # 0.030 # 100 ms (0.100) looks good # TODO set
 
 demo_map = np.zeros((demo_N_ROWS,demo_N_COLS),dtype=np.int8)
 # this is a demo_N_ROWS x demo_N_COLS matrix, mapping locations of grid
