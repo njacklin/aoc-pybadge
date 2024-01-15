@@ -208,12 +208,44 @@ def demo_check_rotation():
         
     if init_demo_falldir != demo_falldir:
         if demo_falldir == DEMO_FALL_DOWN:
+            disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_WIDE_INDEX].x = DEMO_CIR_START_X-2
+            disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_WIDE_INDEX].y = DEMO_CIR_START_Y+(2*DEMO_CIR_RADIUS+2)*DEMO_N_ROWS
+            disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_TALL_INDEX].x = 160
+            disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_TALL_INDEX].y = 120 
+            # disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_INDEX].x = DEMO_CIR_START_X-2
+            # disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_INDEX].y = DEMO_CIR_START_Y+(2*DEMO_CIR_RADIUS+2)*DEMO_N_ROWS
+            # disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_INDEX].width  = (2*DEMO_CIR_RADIUS+2)*DEMO_N_ROWS+4
+            # disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_INDEX].height = 2
             print('INFO: changing rotation direction to DOWN')
         elif demo_falldir == DEMO_FALL_UP:
+            disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_WIDE_INDEX].x = DEMO_CIR_START_X-2
+            disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_WIDE_INDEX].y = DEMO_CIR_START_Y-2
+            disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_TALL_INDEX].x = 160
+            disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_TALL_INDEX].y = 120
+            # disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_INDEX].x = DEMO_CIR_START_X-2
+            # disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_INDEX].y = DEMO_CIR_START_Y-2
+            # disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_INDEX].width  = (2*DEMO_CIR_RADIUS+2)*DEMO_N_ROWS+4
+            # disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_INDEX].height = 2
             print('INFO: changing rotation direction to UP')
         elif demo_falldir == DEMO_FALL_RIGHT:
+            disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_TALL_INDEX].x = DEMO_CIR_START_X+(2*DEMO_CIR_RADIUS+2)*DEMO_N_COLS
+            disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_TALL_INDEX].y = DEMO_CIR_START_Y-2
+            disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_WIDE_INDEX].x = 160
+            disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_WIDE_INDEX].y = 120
+            # disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_INDEX].x = DEMO_CIR_START_X-2
+            # disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_INDEX].y = DEMO_CIR_START_Y+(2*DEMO_CIR_RADIUS+2)*DEMO_N_COLS
+            # disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_INDEX].width  = 2 
+            # disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_INDEX].height = (2*DEMO_CIR_RADIUS+2)*DEMO_N_COLS+4
             print('INFO: changing rotation direction to RIGHT')
         elif demo_falldir == DEMO_FALL_LEFT:
+            disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_TALL_INDEX].x = DEMO_CIR_START_X-2
+            disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_TALL_INDEX].y = DEMO_CIR_START_Y-2
+            disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_WIDE_INDEX].x = 160
+            disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_WIDE_INDEX].y = 120
+            # disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_INDEX].x = DEMO_CIR_START_X-2
+            # disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_INDEX].y = DEMO_CIR_START_Y-2
+            # disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_INDEX].width  = 2 
+            # disp_group[DGROUP_2023DAY14][DEMO_DIR_HIGHLIGHT_INDEX].height = (2*DEMO_CIR_RADIUS+2)*DEMO_N_COLS+4
             print('INFO: changing rotation direction to LEFT')
 
         demo_stop = False # restart demo if it was stopped
@@ -462,11 +494,27 @@ disp_group[DGROUP_2023DAY14].append(label_aoc)
 # border NOTE: don't forget to adjust start of grid positions START_X ...
 disp_group[DGROUP_2023DAY14].append( Rect( DEMO_CIR_START_X-2, 
                                             DEMO_CIR_START_Y-2,
-                                            (2*DEMO_CIR_RADIUS+2)*DEMO_N_ROWS+4, # height
-                                            (2*DEMO_CIR_RADIUS+2)*DEMO_N_COLS+4, # width
+                                            (2*DEMO_CIR_RADIUS+2)*DEMO_N_ROWS+4, # width
+                                            (2*DEMO_CIR_RADIUS+2)*DEMO_N_COLS+4, # height
                                             fill=COLOR_BLACK, 
                                             stroke=2,
                                             outline=COLOR_WHITE) )
+
+# direction highlight
+DEMO_DIR_HIGHLIGHT_WIDE_INDEX = len(disp_group[DGROUP_2023DAY14])
+disp_group[DGROUP_2023DAY14].append( Rect( DEMO_CIR_START_X-2, 
+                                            DEMO_CIR_START_Y+(2*DEMO_CIR_RADIUS+2)*DEMO_N_ROWS,
+                                            (2*DEMO_CIR_RADIUS+2)*DEMO_N_ROWS+4, # width
+                                            2, # height
+                                            fill=COLOR_YELLOW ) )
+
+# can't seem to adjust width and height at runtime... so we need to move these on and off screen
+DEMO_DIR_HIGHLIGHT_TALL_INDEX = len(disp_group[DGROUP_2023DAY14])
+disp_group[DGROUP_2023DAY14].append( Rect( 160, 
+                                           120,
+                                           2, # width
+                                           (2*DEMO_CIR_RADIUS+2)*DEMO_N_COLS+4, # height
+                                           fill=COLOR_YELLOW ) )
 
 # "Load" label
 label_load = label.Label(font, text="Load")
@@ -519,7 +567,7 @@ DEMO_FALL_UP    = const(4)
 demo_falldir = DEMO_FALL_DOWN # provision for accelerometer direction reading
 
 # MAIN ANIMATION SPEED KNOB
-demo_step_delay_sec = 0.010 # 0.030 # 100 ms (0.100) looks good # TODO set
+demo_step_delay_sec = 0.010 # 100 ms = 0.100 # looks good 
 
 demo_map = np.zeros((DEMO_N_ROWS,DEMO_N_COLS),dtype=np.int8)
 # this is a DEMO_N_ROWS x DEMO_N_COLS matrix, mapping locations of grid
