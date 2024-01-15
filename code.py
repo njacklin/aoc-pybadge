@@ -57,6 +57,20 @@ def update_label_stars(star_count):
     global label_stars
     label_stars.text = ("*"*star_count) + (" "*(MAX_CHAR-star_count))
 
+# demo_convert_rowcol_to_circlecoords
+#  be very careful of row/col and x/y directions.  rows go down y and cols go down x.
+def demo_convert_rowcol_to_circlecoord(c_row,c_col):
+
+    global DEMO_CIR_RADIUS
+    global DEMO_CIR_START_X
+    global DEMO_CIR_START_Y
+
+    cir_x = DEMO_CIR_START_X+DEMO_CIR_RADIUS+1+(2*DEMO_CIR_RADIUS+2)*c_col # x along col
+
+    cir_y = DEMO_CIR_START_Y+DEMO_CIR_RADIUS+1+(2*DEMO_CIR_RADIUS+2)*c_row # y along rows
+
+    return (cir_x,cir_y)
+
 # init demo
 # there's not going to be a lot of error handling here...
 def demo_init(): 
@@ -64,15 +78,13 @@ def demo_init():
     global demo_disp_circles
     global demo_display_group_init_size
     global demo_map 
-    global demo_rocks_falling
     global demo_stop
 
-    cir_radius = const(4)
-    cir_start_x = const(57)
-    cir_start_y = const(25) 
+    global DEMO_CIR_RADIUS
+    global DEMO_CIR_START_X
+    global DEMO_CIR_START_Y
     
     # set global variables to initial values
-    demo_rocks_falling = True 
     demo_stop = False 
 
     demo_disp_circles = list()
@@ -105,22 +117,25 @@ def demo_init():
             elif c == 'O':
                 demo_map[irow,icol] = DEMO_V_ROCK 
 
-                demo_disp_circles.append( Circle( cir_start_x+cir_radius+1+(2*cir_radius+2)*irow,
-                                                cir_start_y+cir_radius+1+(2*cir_radius+2)*icol, 
-                                                cir_radius,
-                                                fill=COLOR_GRAY, 
-                                                stroke=1,
-                                                outline=COLOR_LTGRAY) )
+                (cir_x,cir_y) = demo_convert_rowcol_to_circlecoord(irow,icol)
+
+                demo_disp_circles.append( Circle( cir_x, cir_y,                                                 
+                                                  DEMO_CIR_RADIUS,
+                                                  fill=COLOR_GRAY, 
+                                                  stroke=1,
+                                                  outline=COLOR_LTGRAY) )
+                
+                print("DEBUG: creating rock at map index (%d,%d) with coords (%d,%d)"%(irow,icol,cir_x,cir_y))
                 
                 disp_group[DGROUP_2023DAY14].append(demo_disp_circles[-1])
 
             elif c == '#':
                 demo_map[irow,icol] = DEMO_V_CUBE 
 
-                disp_group[DGROUP_2023DAY14].append( Rect( cir_start_x+(2*cir_radius+2)*irow,
-                                                           cir_start_y+(2*cir_radius+2)*icol, 
-                                                           2*cir_radius+2, # height
-                                                           2*cir_radius+2, # width
+                disp_group[DGROUP_2023DAY14].append( Rect( DEMO_CIR_START_X+(2*DEMO_CIR_RADIUS+2)*icol, 
+                                                           DEMO_CIR_START_Y+(2*DEMO_CIR_RADIUS+2)*irow,
+                                                           2*DEMO_CIR_RADIUS+2, # height
+                                                           2*DEMO_CIR_RADIUS+2, # width
                                                            fill=COLOR_BROWN ) )
 
             else:
@@ -129,14 +144,14 @@ def demo_init():
         irow += 1
 
     f.close()
+
+    print("INFO: demo_init() complete")
     
     
 # demo-related function: check for rotation
-#   this isn't going to shift all existing sand (right now, anyway), 
-#   but it will change demo_falldir and reset demo_sand_falling
+#   updates demo_falldir and reset demo_stop
 def demo_check_rotation():
     global demo_falldir 
-    global demo_sand_falling 
     global demo_stop 
     
     init_demo_falldir = demo_falldir 
@@ -167,106 +182,84 @@ def demo_check_rotation():
             print('INFO: changing rotation direction to RIGHT')
         elif demo_falldir == DEMO_FALL_LEFT:
             print('INFO: changing rotation direction to LEFT')
-        
-    # reset sand falling  
-    if init_demo_falldir != demo_falldir and not demo_sand_falling:
-        demo_stop = False 
-        demo_sand_falling = True 
-        demo_generate_sand()
+
+        demo_stop = False # restart demo if it was stopped
     
-# demo-related function: try to move the rocks (the one at the end of disp_group[DGROUP_2023DAY14])
-def demo_sand_fall() :
-    global demo_sand_falling 
-    global demo_sand_moved 
+# return rock (Circle) object in  disp_group[DGROUP_2023DAY14] which corresponds to coordinates given
+#   or None for failure
+def demo_find_rock_in_disp_group(c_row,c_col):
+
+    global demo_disp_circles
+
+    (cir_x,cir_y) = demo_convert_rowcol_to_circlecoord(c_row,c_col)
+    # print("DEBUG: in find_rock searching for rock at map index (%d,%d) with coords (%d,%d)"%(c_row,c_col,cir_x,cir_y))
+
+    for Rock in demo_disp_circles:
+        # print("DEBUG: (Rock.x,Rock.y)=(%d,%d)"%(Rock.x,Rock.y))
+        if Rock.x + DEMO_CIR_RADIUS == cir_x and Rock.y + DEMO_CIR_RADIUS == cir_y : # constructor is a convenience function(?), x/y are shifted by CIR_RADIUS on read back
+            return Rock 
+
+    return None 
+    
+# demo-related function: try to move the rocks 
+def demo_rocks_fall() :
     global demo_stop 
-    global demo_occ
+    global demo_map
     
-    fallx = 0 # amount to "fall" in x direction
-    fally = 0 # amount to "fall" in y direction
-    nextdownleftx = 0
-    nextdownlefty = 0
-    nextdownrightx = 0
-    nextdownrighty = 0
+    fall_x = 0 # amount to "fall" in x direction
+    fall_y = 0 # amount to "fall" in y direction
     
     if demo_falldir == DEMO_FALL_DOWN:
-            fally = 1
-            nextdownleftx = -1
-            nextdownlefty = 1
-            nextdownrightx = 1
-            nextdownrighty = 1
+        fall_y = 1
     elif demo_falldir == DEMO_FALL_UP:
-            fally = -1
-            nextdownleftx = 1
-            nextdownlefty = -1
-            nextdownrightx = -1
-            nextdownrighty = -1
+        fall_y = -1
     elif demo_falldir ==  DEMO_FALL_LEFT:
-            fallx = -1
-            nextdownleftx = -1
-            nextdownlefty = -1
-            nextdownrightx = -1
-            nextdownrighty = 1
+        fall_x = -1
     elif demo_falldir ==  DEMO_FALL_RIGHT:
-            fallx = 1
-            nextdownleftx = 1
-            nextdownlefty = 1
-            nextdownrightx = 1
-            nextdownrighty = -1
+        fall_x = 1
     else:
         raise ValueError(demo_falldir)
+    
+    print("DEBUG: inside demo_rocks_fall()") # debug
+    
+    # scan map and try to move each rock.  if one moves, bail out (this will make "falling" visible)
+    for irow in range(demo_N_ROWS):
+        for icol in range(demo_N_COLS):
+            # print("DEBUG: checking map at (%d,%d), value found = %d"%(irow,icol,demo_map[irow,icol]))
+            if demo_map[irow,icol] == DEMO_V_ROCK:
 
-    bHasMoved = False
+                try: 
+                    print("DEBUG: rock found at (%d,%d)"%(irow,icol))
+                    print("DEBUG: value where we want to move to is %d (EMPTY = %d)"%(demo_map[irow+fall_y,icol+fall_x],DEMO_V_EMPTY))
+                    if demo_map[irow+fall_y,icol+fall_x] == DEMO_V_EMPTY:
+                        # update position in demo_map
+                        demo_map[irow+fall_y,icol+fall_x] = DEMO_V_ROCK 
+                        demo_map[irow,icol] = DEMO_V_EMPTY 
+
+                        # update position in display_group drawing
+                        Rock = demo_find_rock_in_disp_group(irow,icol)
+                        if not Rock:
+                            raise Exception("*** could not find rock to move !!!")
+                        
+                        (new_cir_x,new_cir_y) = demo_convert_rowcol_to_circlecoord(irow+fall_y,icol+fall_x)
+                        Rock.x = new_cir_x - DEMO_CIR_RADIUS # TODO verify subtraction is needed
+                        Rock.y = new_cir_y - DEMO_CIR_RADIUS 
+
+                        # if we successfully moved a rock, return early
+                        print("DEBUG: *** moved a rock ***") # debug
+                        return 
+                except Exception as e: 
+                    print("ERROR: %s"%e)
+                    pass # must have exceeded boundaries... just move on
+
+                # print("DEBUG: --- sleeping ---")
+                # time.sleep(15.0) # DEBUG
+
+    # if we get here, then no rocks were moved
+    demo_stop = True 
+
+    print("DEBUG: hit bottom of demo_rocks_fall() with no rock moved") # debug
     
-    falling_sand = disp_group[DGROUP_2023DAY14][-1]
-    
-    # compute effective coordinates in demo_occ 
-    sand_x_mapped = int(falling_sand.x/DEMO_ZOOM_FACTOR)
-    sand_y_mapped = int((falling_sand.y-demo_voffset)/DEMO_ZOOM_FACTOR)
-    
-    # print("DEBUG: trying to move sand at (%d,%d)"%(sand_x_mapped,sand_y_mapped))
-    
-    # try to move "down"
-    try: # sometimes breaks during rotation
-        if demo_occ[sand_x_mapped+fallx, sand_y_mapped+fally] == 0:
-            falling_sand.x += fallx*DEMO_ZOOM_FACTOR
-            falling_sand.y += fally*DEMO_ZOOM_FACTOR
-            bHasMoved = True 
-        
-        # try to move "down-left"
-        elif demo_occ[sand_x_mapped+nextdownleftx, sand_y_mapped+nextdownlefty] == 0:
-            falling_sand.x += nextdownleftx*DEMO_ZOOM_FACTOR 
-            falling_sand.y += nextdownlefty*DEMO_ZOOM_FACTOR 
-            bHasMoved = True 
-            
-        # try to move "down-right"
-        elif demo_occ[sand_x_mapped+nextdownrightx, sand_y_mapped+nextdownrightx] == 0:
-            falling_sand.x += nextdownrightx*DEMO_ZOOM_FACTOR 
-            falling_sand.y += nextdownrighty*DEMO_ZOOM_FACTOR 
-            bHasMoved = True 
-    except: 
-        pass 
-    
-    if bHasMoved:
-        # print("DEBUG: sand moved")
-        demo_sand_moved = True 
-    else:
-        # print("DEBUG: sand could not move")
-        pass
-        
-    # if we move too low, bail out
-    if demo_falldir == DEMO_FALL_DOWN and int((falling_sand.y-demo_voffset)/DEMO_ZOOM_FACTOR) > demo_size_height: 
-        print('DEBUG: sand falling off, stopping.')
-        demo_stop = True 
-        return
-    # TODO add other cases to capture falling off other sides
-        
-    # if we haven't moved and haven't bailed out, then mark occupied 
-    try: 
-        if not bHasMoved: 
-            demo_occ[sand_x_mapped, sand_y_mapped] = DEMO_OCC_SAND
-            demo_sand_falling = False 
-    except: 
-        pass 
     
 
 # SETUP ----------------------------------------------------------------------
@@ -472,10 +465,12 @@ demo_N_COLS = 10
 
 demo_loadval = 0
 
-demo_rocks_falling = True 
-demo_rocks_moved = True 
 demo_stop = False 
 demo_process_rotate = False 
+
+DEMO_CIR_RADIUS = const(4)
+DEMO_CIR_START_X = const(57) # note, starts in upper left and goes to right
+DEMO_CIR_START_Y = const(25) # note, starts in upper left and goes down
 
 DEMO_FALL_DOWN  = const(1)
 DEMO_FALL_LEFT  = const(2)
@@ -483,7 +478,7 @@ DEMO_FALL_RIGHT = const(3)
 DEMO_FALL_UP    = const(4)
 demo_falldir = DEMO_FALL_DOWN # provision for accelerometer direction reading
 
-demo_step_delay_sec = 0.100 # 100 ms (0.100) looks good, but is slow for debug
+demo_step_delay_sec = 0.1 # 100 ms (0.100) looks good # TODO set
 
 demo_map = np.zeros((demo_N_ROWS,demo_N_COLS),dtype=np.int8)
 # this is a demo_N_ROWS x demo_N_COLS matrix, mapping locations of grid
@@ -573,28 +568,17 @@ while True:
 
 
     elif dgroup_show == DGROUP_2023DAY14:
-        pass
-    #     if time.monotonic() >= demo_next_step_time:
+        if time.monotonic() >= demo_next_step_time:
             
-    #         if USE_ACCEL: 
-    #             # check rotation
-    #             demo_check_rotation()
+            if USE_ACCEL: 
+                # check rotation
+                demo_check_rotation()
             
-    #         if not demo_stop: 
-                
-    #             # do sand stuff
-    #             if demo_sand_falling: 
-    #                 demo_sand_fall() 
-    #             elif not demo_sand_falling and not demo_sand_moved: # full up
-    #                 print('DEBUG: detected full sand condition')
-    #                 demo_stop = True 
-    #             else:
-    #                 demo_generate_sand() 
-    #                 demo_sand_moved = False
-    #                 demo_sand_falling = True 
+            if not demo_stop: 
+                demo_rocks_fall() 
             
-    #         # set time for next step increment
-    #         demo_next_step_time = time.monotonic() + demo_step_delay_sec
+            # set time for next step increment
+            demo_next_step_time = time.monotonic() + demo_step_delay_sec
     else:
         print("ERROR: undefined state: %d"%dgroup_show)
 
