@@ -22,15 +22,16 @@ screens (display groups) and rotates through them when a hardware button is
 pressed. The three screens are (1) leaderboard, (2) first-to-50 stars, and 
 (3) a demo of the AoC 2022 day 14 challenge (sand falling in a cave).
 
-## aoc2022_day14_init.txt
-Flat text file which encodes the intital state for the [AoC 2022 day 14] demo.
+## aoc2023_day14_init.txt
+Flat text file which encodes the intital state for the [AoC 2023 day 14] demo.
 If present, this file should have text which describes the starting rock structure,
-presented as ordered pairs x1,y1 -> x2,y1 or x1,y2 (the rock segments must be
-straight lines, either up, down, left, or right).  For more details, refer to the
-problem specification, https://adventofcode.com/2022/day/14. 
-There is an example input checked in for reference, aoc2022_day14_ex.txt.
+With "O" coding for moveable rock, "#" coding for immovable cube, and "." for empty.
+There must be exactly 10 rows and 10 columns or else the code will blow up.
+For more details, refer to the
+problem specification, https://adventofcode.com/2023/day/14. 
+There is an example input checked in for reference, aoc2023_day14_ex.txt.
 
-If this file is not present, the default input aoc2022_day14_ex.txt will be loaded..
+If this file is not present, the default input aoc2023_day14_ex.txt will be loaded.
 
 ## serial.sh
 A one line script to lauch a serial terminal window, suitable for macOS and 
