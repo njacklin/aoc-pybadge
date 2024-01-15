@@ -239,6 +239,9 @@ def demo_rocks_fall() :
                         # update position in display_group drawing
                         Rock = demo_find_rock_in_disp_group(irow,icol)
                         if not Rock:
+                            # unroll changes to demo_map to avoid state corruption
+                            demo_map[irow+fall_y,icol+fall_x] = DEMO_V_EMPTY 
+                            demo_map[irow,icol] = DEMO_V_ROCK 
                             raise Exception("*** find_rock failed !!!") # fucks up state in demo_map... not atomic
                         
                         (new_cir_x,new_cir_y) = demo_convert_rowcol_to_circlecoord(irow+fall_y,icol+fall_x)
