@@ -196,7 +196,10 @@ def demo_find_rock_in_disp_group(c_row,c_col):
 
     for Rock in demo_disp_circles:
         # print("DEBUG: (Rock.x,Rock.y)=(%d,%d)"%(Rock.x,Rock.y))
-        if Rock.x + DEMO_CIR_RADIUS == cir_x and Rock.y + DEMO_CIR_RADIUS == cir_y : # constructor is a convenience function(?), x/y are shifted by CIR_RADIUS on read back
+        #if Rock.x + DEMO_CIR_RADIUS == cir_x and Rock.y + DEMO_CIR_RADIUS == cir_y : # constructor is a convenience function(?), x/y are shifted by CIR_RADIUS on read back
+        # loosen up match criteria!
+        if     Rock.x - 2*DEMO_CIR_RADIUS <= cir_x <= Rock.x + 2*DEMO_CIR_RADIUS \
+           and Rock.y - 2*DEMO_CIR_RADIUS <= cir_y <= Rock.y + 2*DEMO_CIR_RADIUS : 
             return Rock 
 
     return None 
