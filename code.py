@@ -25,6 +25,14 @@ COLOR_BROWN  = 0xCD7F32
 COLOR_ROCK   = COLOR_GRAY
 COLOR_CUBE   = COLOR_BROWN
 
+# demo params needed early
+DEMO_CIR_RADIUS = const(4)
+DEMO_CIR_START_X = const(55) # 57 no border # note, starts in upper left and goes to right
+DEMO_CIR_START_Y = const(23) # 25 no border # note, starts in upper left and goes down
+
+DEMO_N_ROWS = const(10)
+DEMO_N_COLS = const(10)
+
 # IMPORTS --------------------------------------------------------------------
 import board
 import displayio
@@ -65,15 +73,15 @@ def update_label_loadval(): # takes in an int
 
     # update demo_loadval by reading demo_map
     demo_loadval = 0
-    for irow in range(demo_N_ROWS):
-        for icol in range(demo_N_COLS):
+    for irow in range(DEMO_N_ROWS):
+        for icol in range(DEMO_N_COLS):
             if demo_map[irow,icol] == DEMO_V_ROCK:
                 if   demo_falldir == DEMO_FALL_UP:
-                    demo_loadval += (demo_N_ROWS - irow) 
+                    demo_loadval += (DEMO_N_ROWS - irow) 
                 elif demo_falldir == DEMO_FALL_DOWN: 
                     demo_loadval += (irow + 1)
                 elif demo_falldir == DEMO_FALL_RIGHT: 
-                    demo_loadval += (demo_N_COLS - icol)
+                    demo_loadval += (DEMO_N_COLS - icol)
                 elif demo_falldir == DEMO_FALL_LEFT: 
                     demo_loadval += (icol + 1)
                 else: 
@@ -233,8 +241,8 @@ def demo_find_rock_in_disp_group(c_row,c_col):
 def demo_rocks_fall() :
     global demo_stop 
     global demo_map
-    global demo_N_ROWS
-    global demo_N_COLS
+    global DEMO_N_ROWS
+    global DEMO_N_COLS
     
     fall_x = 0 # amount to "fall" in x direction
     fall_y = 0 # amount to "fall" in y direction
@@ -253,17 +261,17 @@ def demo_rocks_fall() :
     # print("DEBUG: inside demo_rocks_fall()") # debug
     
     # scan map and try to move each rock.  if one moves, bail out (this will make "falling" visible)
-    for irow in range(demo_N_ROWS):
-        for icol in range(demo_N_COLS):
+    for irow in range(DEMO_N_ROWS):
+        for icol in range(DEMO_N_COLS):
             # print("DEBUG: checking map at (%d,%d), value found = %d"%(irow,icol,demo_map[irow,icol]))
             if demo_map[irow,icol] == DEMO_V_ROCK:
 
                 # print("DEBUG: rock found at (%d,%d)"%(irow,icol))
                 # DANGEROUS - reading beyond indices doesn't always fail?? extends array!
                 #   DO NOT DO: # print("DEBUG: value where we want to move to is %d (EMPTY = %d)"%(demo_map[irow+fall_y,icol+fall_x],DEMO_V_EMPTY))
-                # print("DEBUG: irow = %d, fall_y = %d, demo_N_ROWS = %d, icol = %d, fall_x= %d, demo_N_COLS = %d"%(irow,fall_y,demo_N_ROWS,icol,fall_x,demo_N_COLS))
-                # print("DEBUG: 0 <= irow+fall_y < demo_N_ROWS is %s and 0 <= icol+fall_x < demo_N_COLS is %s"%(0 <= irow+fall_y < demo_N_ROWS, 0 <= icol+fall_x < demo_N_COLS ))
-                if 0 <= irow+fall_y < demo_N_ROWS and 0 <= icol+fall_x < demo_N_COLS and demo_map[irow+fall_y,icol+fall_x] == DEMO_V_EMPTY:
+                # print("DEBUG: irow = %d, fall_y = %d, DEMO_N_ROWS = %d, icol = %d, fall_x= %d, DEMO_N_COLS = %d"%(irow,fall_y,DEMO_N_ROWS,icol,fall_x,DEMO_N_COLS))
+                # print("DEBUG: 0 <= irow+fall_y < DEMO_N_ROWS is %s and 0 <= icol+fall_x < DEMO_N_COLS is %s"%(0 <= irow+fall_y < DEMO_N_ROWS, 0 <= icol+fall_x < DEMO_N_COLS ))
+                if 0 <= irow+fall_y < DEMO_N_ROWS and 0 <= icol+fall_x < DEMO_N_COLS and demo_map[irow+fall_y,icol+fall_x] == DEMO_V_EMPTY:
                     # update position in demo_map
                     demo_map[irow+fall_y,icol+fall_x] = DEMO_V_ROCK 
                     demo_map[irow,icol] = DEMO_V_EMPTY 
@@ -451,6 +459,15 @@ label_aoc.anchor_point = (0.0,0.0) # left top
 label_aoc.anchored_position = (0,0)
 disp_group[DGROUP_2023DAY14].append(label_aoc)
 
+# border NOTE: don't forget to adjust start of grid positions START_X ...
+disp_group[DGROUP_2023DAY14].append( Rect( DEMO_CIR_START_X-2, 
+                                            DEMO_CIR_START_Y-2,
+                                            (2*DEMO_CIR_RADIUS+2)*DEMO_N_ROWS+4, # height
+                                            (2*DEMO_CIR_RADIUS+2)*DEMO_N_COLS+4, # width
+                                            fill=COLOR_BLACK, 
+                                            stroke=2,
+                                            outline=COLOR_WHITE) )
+
 # "Load" label
 label_load = label.Label(font, text="Load")
 label_load.anchor_point = (0.0,0.0) # left top
@@ -490,17 +507,10 @@ FIFTYSTAR_FLASHES = const(4)
 
 # demo global vars 
 
-demo_N_ROWS = 10
-demo_N_COLS = 10
-
 demo_loadval = 0
 
 demo_stop = False 
 demo_process_rotate = False 
-
-DEMO_CIR_RADIUS = const(4)
-DEMO_CIR_START_X = const(57) # note, starts in upper left and goes to right
-DEMO_CIR_START_Y = const(25) # note, starts in upper left and goes down
 
 DEMO_FALL_DOWN  = const(1)
 DEMO_FALL_LEFT  = const(2)
@@ -511,8 +521,8 @@ demo_falldir = DEMO_FALL_DOWN # provision for accelerometer direction reading
 # MAIN ANIMATION SPEED KNOB
 demo_step_delay_sec = 0.010 # 0.030 # 100 ms (0.100) looks good # TODO set
 
-demo_map = np.zeros((demo_N_ROWS,demo_N_COLS),dtype=np.int8)
-# this is a demo_N_ROWS x demo_N_COLS matrix, mapping locations of grid
+demo_map = np.zeros((DEMO_N_ROWS,DEMO_N_COLS),dtype=np.int8)
+# this is a DEMO_N_ROWS x DEMO_N_COLS matrix, mapping locations of grid
 #  values are one of the three below, where DEMO_V_EMPTY = 0
 
 DEMO_V_EMPTY = const(0)
