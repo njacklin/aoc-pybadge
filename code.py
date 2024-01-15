@@ -229,8 +229,8 @@ def demo_rocks_fall() :
             if demo_map[irow,icol] == DEMO_V_ROCK:
 
                 try: 
-                    print("DEBUG: rock found at (%d,%d)"%(irow,icol))
-                    print("DEBUG: value where we want to move to is %d (EMPTY = %d)"%(demo_map[irow+fall_y,icol+fall_x],DEMO_V_EMPTY))
+                    # print("DEBUG: rock found at (%d,%d)"%(irow,icol))
+                    # print("DEBUG: value where we want to move to is %d (EMPTY = %d)"%(demo_map[irow+fall_y,icol+fall_x],DEMO_V_EMPTY))
                     if demo_map[irow+fall_y,icol+fall_x] == DEMO_V_EMPTY:
                         # update position in demo_map
                         demo_map[irow+fall_y,icol+fall_x] = DEMO_V_ROCK 
@@ -239,7 +239,7 @@ def demo_rocks_fall() :
                         # update position in display_group drawing
                         Rock = demo_find_rock_in_disp_group(irow,icol)
                         if not Rock:
-                            raise Exception("*** could not find rock to move !!!")
+                            raise Exception("*** find_rock failed !!!") # fucks up state in demo_map... not atomic
                         
                         (new_cir_x,new_cir_y) = demo_convert_rowcol_to_circlecoord(irow+fall_y,icol+fall_x)
                         Rock.x = new_cir_x - DEMO_CIR_RADIUS # TODO verify subtraction is needed
@@ -256,7 +256,7 @@ def demo_rocks_fall() :
                 # time.sleep(15.0) # DEBUG
 
     # if we get here, then no rocks were moved
-    demo_stop = True 
+    demo_stop = False # TODO was True here... this basically makes demo_stop always False 
 
     print("DEBUG: hit bottom of demo_rocks_fall() with no rock moved") # debug
     
